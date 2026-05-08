@@ -1,9 +1,9 @@
 # bilimiao-mod
 > 基于原版 bilimiao2 v2.4.8.1 的第三方修改版
 
-> [full apk](https://github.com/8023BIAO/bilimiao-mod/releases/download/v2026.05.08-01/app-full-release.apk)
+- [full apk](https://github.com/8023BIAO/bilimiao-mod/releases/download/v2026.05.08-01/app-full-release.apk)
 
-> [foss apk](https://github.com/8023BIAO/bilimiao-mod/releases/download/v2026.05.08-01/app-foss-release.apk)
+- [foss apk](https://github.com/8023BIAO/bilimiao-mod/releases/download/v2026.05.08-01/app-foss-release.apk)
 
 ## 声明
 
