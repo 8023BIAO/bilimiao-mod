@@ -90,6 +90,7 @@ class ErrorLogPage : ComposePage() {
                     text = if (selectionMode) "已选 ${selectedIndices.size} 项" else "错误日志",
                     style = MaterialTheme.typography.titleLarge
                 )
+                if (logs.isNotEmpty()) {
                 Row {
                     if (selectionMode) {
                         // 选择模式下的按钮
@@ -107,11 +108,12 @@ class ErrorLogPage : ComposePage() {
                         TextButton(
                             onClick = {
                                 if (selectedIndices.isNotEmpty()) {
+                                    val count = selectedIndices.size
                                     ErrorLogCollector.deleteLogs(selectedIndices)
                                     logs = ErrorLogCollector.getLogs()
                                     selectedIndices = emptySet()
                                     selectionMode = false
-                                    Toast.makeText(context, "已删除 ${selectedIndices.size} 条", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(context, "已删除 $count 条", Toast.LENGTH_SHORT).show()
                                 }
                             },
                             enabled = selectedIndices.isNotEmpty()
@@ -152,6 +154,7 @@ class ErrorLogPage : ComposePage() {
                             Icon(Icons.Outlined.Delete, contentDescription = "清空")
                         }
                     }
+                }
                 }
             }
 

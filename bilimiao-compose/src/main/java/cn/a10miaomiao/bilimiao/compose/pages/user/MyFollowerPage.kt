@@ -106,12 +106,9 @@ private class MyFollowerViewModel(
                 val result = res.requireData()
                 if (result != null) {
                     if (pageNum == 1) {
-                        list.data.value = result.list
+                        list.data.value = result.list.distinctBy { it.mid }
                     } else {
-                        list.data.value = mutableListOf<FollowerUserInfo>().apply {
-                            addAll(list.data.value)
-                            addAll(result.list)
-                        }
+                        list.data.value = (list.data.value + result.list).distinctBy { it.mid }
                     }
                     list.finished.value = result.list.size < list.pageSize
                 } else {

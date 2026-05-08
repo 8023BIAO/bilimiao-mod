@@ -204,8 +204,11 @@ private fun ExportSettingPageContent() {
                             try {
                                 val count = SettingsExporter.importFromJson(context, pendingJson!!)
                                 statusMessage = "\u2705 已导入 $count 项设置，请重启应用"
-                                // Kill process to force restart
                                 withContext(Dispatchers.Main) {
+                                    val intent = context.packageManager.getLaunchIntentForPackage(context.packageName)
+                                    if (intent != null) {
+                                        context.startActivity(android.content.Intent.makeRestartActivityTask(intent.component))
+                                    }
                                     android.os.Process.killProcess(android.os.Process.myPid())
                                 }
                             } catch (e: Exception) {
