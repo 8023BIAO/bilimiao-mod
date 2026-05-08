@@ -305,7 +305,7 @@ private fun ReplyTextField(
     Surface(
         modifier = modifier,
         shape = RoundedCornerShape(8.dp),
-        color = MaterialTheme.colorScheme.surfaceVariant,
+        color = Color.Transparent,
     ) {
         BasicTextField(
             modifier = Modifier
@@ -372,8 +372,7 @@ private fun ReplyTextToolbar(
 //            )
 //        }
         Spacer(Modifier.weight(1f))
-        FloatingActionButton(
-            modifier = Modifier.height(circleButtonSize),
+        TextButton(
             onClick = onSendClick
         ) {
             Row(

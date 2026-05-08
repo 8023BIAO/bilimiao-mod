@@ -9,8 +9,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.material3.ElevatedAssistChip
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -112,24 +110,44 @@ fun VideoStatButton(
     color: Color,
     onClick: () -> Unit,
 ) {
-    ElevatedAssistChip(
+    TextButton(
+        modifier = modifier,
         onClick = onClick,
-        leadingIcon = {
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
             Icon(
                 imageVector = icon,
                 contentDescription = description,
                 modifier = Modifier.size(24.dp),
                 tint = color,
             )
-        },
-        label = {
             Text(
                 text = text,
                 color = MaterialTheme.colorScheme.outline,
                 modifier = Modifier.padding(start = 4.dp),
             )
         }
-    )
+    }
+//    ElevatedAssistChip(
+//        onClick = onClick,
+//        leadingIcon = {
+//            Icon(
+//                imageVector = icon,
+//                contentDescription = description,
+//                modifier = Modifier.size(24.dp),
+//                tint = color,
+//            )
+//        },
+//        label = {
+//            Text(
+//                text = text,
+//                color = MaterialTheme.colorScheme.outline,
+//                modifier = Modifier.padding(start = 4.dp),
+//            )
+//        }
+//    )
 //    TextButton(
 //        modifier = modifier,
 //        onClick = onClick,
