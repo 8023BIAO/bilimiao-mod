@@ -1,5 +1,7 @@
 # bilimiao-mod
 > 基于原版 bilimiao2 v2.4.8.1 的第三方修改版
+> [foss apk](https://github.com/8023BIAO/bilimiao-mod/releases/download/v2026.05.08-01/app-full-release.apk)
+> [foss apk](https://github.com/8023BIAO/bilimiao-mod/releases/download/v2026.05.08-01/app-foss-release.apk)
 
 ## 声明
 
@@ -34,9 +36,7 @@ API 来自官方网站，不提供破解内容。
 - 底栏锁定：防止滑动时隐藏底部导航
 - 合集排序：支持按 aid 升序/降序/热度排序
 - 自动连播：下一 P → 下一番剧 → 播放列表 → 推荐 → 循环
-- 定时关闭快捷入口（播放器更多菜单）
 - 隐藏相关推荐 / 隐藏封面
-- 弹幕发送时自动暂停
 
 ### 弹幕
 - 弹幕关键词过滤（黑名单匹配）
@@ -53,7 +53,7 @@ API 来自官方网站，不提供破解内容。
 - 身份导入导出（跨设备迁移登录态）
 - 首页新增"动态"导航入口
 - DPI 设置、图片缓存等移到"实用功能"分类
-
+  
 ### 其他
 - 存储权限优化：下载目录改为公共 `Download/BiliMiao/`，移除运行时存储权限请求
 - 首页推荐/热门 URI 去重（翻页时自动过滤已显示视频）
@@ -65,28 +65,20 @@ API 来自官方网站，不提供破解内容。
 - MaterialToolbar 反射构造异常
 - DynamicPage 序列化崩溃
 - DanmakuVideoPlayer 空指针（currentDanmakuMode / setWindowInsets）
-- 收藏夹 mid 为空导致加载失败
 - 播放器 Surface 丢失黑屏
 - DownloadService JSON 解析崩溃
 - LocalPlayerSource 兼容旧版 index.json 字段
-- 消息页未登录反序列化崩溃
 - PlaybackService 秒退崩溃（MediaSession 懒初始化）
 
 ## UI 改进
 
 - 底栏图标统一配色
 - 选中 tab 高亮，其余统一灰色
-- 视频详情页合集左右增加边距
-- 动态页视频卡片底部增加间距
 - 播放器弹窗改用 Material3 原生选中样式
 - 启动图标背景改 B站粉（区分原版）
-- 排序菜单带图标
 
 ## 播放器通知栏
 
 - MediaSessionService 改为纯 Service + 手动 MediaStyle 通知
-- 修复通知栏按钮点击失效
-- 修复自动联播通知信息不更新
-- 播放/暂停状态双向同步
 - 通知权限仅首次弹窗
 
