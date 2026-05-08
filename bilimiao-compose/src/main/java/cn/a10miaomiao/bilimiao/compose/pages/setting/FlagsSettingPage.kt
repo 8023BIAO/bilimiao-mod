@@ -470,7 +470,12 @@ private fun FlagsSettingPageContent(
                             scope.launch {
                                 try {
                                     SettingsExporter.resetAll(context)
-                                    Toast.makeText(context, "设置已重置", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(context, "设置已重置，正在重启...", Toast.LENGTH_SHORT).show()
+                                    val intent = context.packageManager.getLaunchIntentForPackage(context.packageName)
+                                    if (intent != null) {
+                                        context.startActivity(android.content.Intent.makeRestartActivityTask(intent.component))
+                                    }
+                                    android.os.Process.killProcess(android.os.Process.myPid())
                                 } catch (e: Exception) {
                                     Toast.makeText(context, "重置失败：${e.message}", Toast.LENGTH_LONG).show()
                                 }

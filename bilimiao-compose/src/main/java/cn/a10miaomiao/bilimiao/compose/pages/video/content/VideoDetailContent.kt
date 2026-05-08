@@ -245,7 +245,6 @@ fun VideoDetailContent(
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier
                                 .clip(RoundedCornerShape(10.dp))
-                                .background(MaterialTheme.colorScheme.surfaceVariant)
                                 .clickable {
                                     viewModel.toSearchPage(tag.name)
                                 }

@@ -57,8 +57,6 @@ fun VideoPlayListBox(
     Box(modifier) {
         Column(
             modifier = Modifier
-                .clip(RoundedCornerShape(10.dp))
-                .background(MaterialTheme.colorScheme.surfaceVariant)
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,

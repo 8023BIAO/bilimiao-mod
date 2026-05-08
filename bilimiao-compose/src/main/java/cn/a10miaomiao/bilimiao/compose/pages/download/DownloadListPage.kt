@@ -10,7 +10,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.*
@@ -289,33 +289,30 @@ internal fun DownloadListPageContent(
                 modifier = Modifier.padding(horizontal = 5.dp),
                 horizontalArrangement = Arrangement.spacedBy(5.dp),
             ) {
-                FilterChip(
-                    selected = status == 0,
-                    onClick = {
-                        status = 0
-                    },
-                    label = {
-                        Text(text = "全部")
-                    }
-                )
-                FilterChip(
-                    selected = status == 1,
-                    onClick = {
-                        status = 1
-                    },
-                    label = {
-                        Text(text = "下载中")
-                    }
-                )
-                FilterChip(
-                    selected = status == 2,
-                    onClick = {
-                        status = 2
-                    },
-                    label = {
-                        Text(text = "下载完成")
-                    }
-                )
+                TextButton(
+                    onClick = { status = 0 },
+                ) {
+                    Text(
+                        text = "全部",
+                        color = if (status == 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline,
+                    )
+                }
+                TextButton(
+                    onClick = { status = 1 },
+                ) {
+                    Text(
+                        text = "下载中",
+                        color = if (status == 1) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline,
+                    )
+                }
+                TextButton(
+                    onClick = { status = 2 },
+                ) {
+                    Text(
+                        text = "下载完成",
+                        color = if (status == 2) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline,
+                    )
+                }
             }
         }
         items(
