@@ -295,7 +295,7 @@ private fun VideoDownloadItem(
         Surface(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(10.dp),
-            color = MaterialTheme.colorScheme.surfaceVariant
+            color = Color.Transparent
         ) {
             Row(
                 modifier = Modifier

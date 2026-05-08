@@ -303,62 +303,47 @@ fun UserSpaceHeader(
                     contentPadding = PaddingValues(end = 10.dp),
                 ) {
                     items(seriesList, { it.param }) {
-                        Row(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(4.dp))
-                                .clickable {
-                                    archiveViewModel.toSeriesDetail(it)
-                                }
-                                .background(MaterialTheme.colorScheme.surfaceVariant)
-                                .height(seriesHeight)
-                                .padding(horizontal = 8.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            // collections
-                            Icon(
-                                imageVector = when(it.type) {
-                                    "series" -> Icons.AutoMirrored.Default.List
-                                    "season" -> Icons.AutoMirrored.Default.Article
-                                    else -> Icons.AutoMirrored.Default.ViewList
-                                },
-                                contentDescription = null,
-                                modifier = Modifier
-                                    .padding(end = 5.dp)
-                                    .size(20.dp),
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                            Text(
-                                text = it.title,
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
+                        AssistChip(
+                            onClick = { archiveViewModel.toSeriesDetail(it) },
+                            label = {
+                                Text(
+                                    text = it.title,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                )
+                            },
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = when(it.type) {
+                                        "series" -> Icons.AutoMirrored.Default.List
+                                        "season" -> Icons.AutoMirrored.Default.Article
+                                        else -> Icons.AutoMirrored.Default.ViewList
+                                    },
+                                    contentDescription = null,
+                                    modifier = Modifier.size(18.dp),
+                                )
+                            },
+                            modifier = Modifier.height(seriesHeight),
+                        )
                     }
                     if (seriesTotal > seriesList.size) {
                         item {
-                            Row(
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(4.dp))
-                                    .clickable(
-                                        onClick = archiveViewModel::toSeriesList,
+                            AssistChip(
+                                onClick = archiveViewModel::toSeriesList,
+                                label = {
+                                    Text(
+                                        text = "更多合集",
+                                        style = MaterialTheme.typography.bodyMedium,
                                     )
-                                    .background(MaterialTheme.colorScheme.surfaceVariant,)
-                                    .height(seriesHeight)
-                                    .padding(horizontal = 8.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                            ) {
-                                Text(
-                                    text = "更多合集",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                                Icon(
-                                    imageVector = Icons.AutoMirrored.Outlined.ArrowForward,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(16.dp),
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
+                                },
+                                trailingIcon = {
+                                    Icon(
+                                        imageVector = Icons.AutoMirrored.Outlined.ArrowForward,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(16.dp),
+                                    )
+                                },
+                                modifier = Modifier.height(seriesHeight),
+                            )
                         }
                     }
                 }

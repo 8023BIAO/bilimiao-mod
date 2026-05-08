@@ -212,7 +212,7 @@ private fun VideoPagesPageContent(
                         modifier = Modifier.fillMaxWidth()
                             .heightIn(min = 50.dp),
                         shape = RoundedCornerShape(10.dp),
-                        color = MaterialTheme.colorScheme.surfaceVariant,
+                        color = Color.Transparent,
                         border = if (isCurrentPlay) BorderStroke(
                             1.dp, color = MaterialTheme.colorScheme.primary
                         ) else null

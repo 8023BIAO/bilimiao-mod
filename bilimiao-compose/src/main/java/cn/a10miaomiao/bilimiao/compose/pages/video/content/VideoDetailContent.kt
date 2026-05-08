@@ -29,6 +29,7 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.SelectionContainer
+import androidx.compose.material3.AssistChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -239,16 +240,14 @@ fun VideoDetailContent(
                     horizontalArrangement = Arrangement.spacedBy(5.dp)
                 ) {
                     tags.forEach { tag ->
-                        Text(
-                            text = tag.name,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(10.dp))
-                                .clickable {
-                                    viewModel.toSearchPage(tag.name)
-                                }
-                                .padding(vertical = 4.dp, horizontal = 8.dp)
+                        AssistChip(
+                            onClick = { viewModel.toSearchPage(tag.name) },
+                            label = {
+                                Text(
+                                    text = tag.name,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                )
+                            },
                         )
                     }
                 }
