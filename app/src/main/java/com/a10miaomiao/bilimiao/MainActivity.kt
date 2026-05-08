@@ -226,7 +226,7 @@ class MainActivity
             ui.root.onPlayerChanged = {
                 statusBarHelper.isLightStatusBar =
                     !it || (ui.root.orientation == ScaffoldView.HORIZONTAL && !ui.root.fullScreenPlayer)
-                setWindowInsets(ui.root.rootWindowInsets)
+                ui.root.rootWindowInsets?.let { setWindowInsets(it) }
             }
         } else {
             setWindowInsetsAndroidL()

@@ -43,7 +43,7 @@ class AppBarVerticalUi(
     val mTitle = textView {
         gravity = Gravity.CENTER
         textSize = 12f
-        setTextColor(config.foregroundAlpha80Color)
+        setTextColor(config.foregroundAlpha45Color)
     }
 
     private fun View.getInAnim(): Animator {

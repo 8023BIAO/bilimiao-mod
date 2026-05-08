@@ -229,6 +229,7 @@ private fun VideoPagesPageContent(
                             Text(
                                 text = "P${index + 1} " + page.part,
                                 fontSize = 18.sp,
+                                color = MaterialTheme.colorScheme.onSurface,
                                 modifier = Modifier.weight(1f)
                             )
                             if (isCurrentPlay) {
@@ -284,9 +285,13 @@ private fun VideoPagesPageContent(
                     modifier = Modifier.padding(horizontal = 8.dp),
                     verticalArrangement = Arrangement.spacedBy(5.dp)
                 ) {
-                    Text(text = "当前播放：")
                     Text(
-                        text = currentPlay.title
+                        text = "当前播放：",
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                    Text(
+                        text = currentPlay.title,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
                     )
                 }
             }
