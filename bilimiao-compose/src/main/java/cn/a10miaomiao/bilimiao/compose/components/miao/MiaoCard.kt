@@ -7,6 +7,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
@@ -21,16 +22,16 @@ fun MiaoCard(
 ) {
     Card(
         modifier = modifier,
-        shape = RoundedCornerShape(5.dp),
+        shape = RoundedCornerShape(0.dp),
         enabled = enabled,
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+            containerColor = Color.Transparent,
             contentColor = MaterialTheme.colorScheme.onSurface,
             disabledContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
             disabledContainerColor = MaterialTheme.colorScheme.primaryContainer,
         ),
         elevation = CardDefaults.outlinedCardElevation(
-            defaultElevation = 1.dp,
+            defaultElevation = 0.dp,
             disabledElevation = 0.dp
         ),
         onClick = onClick,
