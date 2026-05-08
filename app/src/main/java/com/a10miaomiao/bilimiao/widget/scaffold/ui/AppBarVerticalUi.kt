@@ -261,8 +261,7 @@ class AppBarVerticalUi(
             100f, 0f,
         ))
         addAnimation(AlphaAnimation(0f, 1f))
-        duration = 400
-        repeatMode = Animation.REVERSE
+        duration = 300
         interpolator = DecelerateInterpolator()
     }
 

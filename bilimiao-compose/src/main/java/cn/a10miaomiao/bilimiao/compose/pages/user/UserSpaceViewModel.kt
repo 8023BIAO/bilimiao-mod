@@ -222,11 +222,11 @@ class UserSpaceViewModel(
             1 -> filterUpperDelete()
             // 屏蔽
             2 -> filterUpperAdd()
-            // 用浏览器打开
-            3 -> {
-                val url = getUserSpaceUrl()
-                BiliUrlMatcher.toUrlLink(activity, url)
-            }
+            // 用浏览器打开（已禁用）
+//            3 -> {
+//                val url = getUserSpaceUrl()
+//                BiliUrlMatcher.toUrlLink(activity, url)
+//            }
             // 复制链接
             4 -> {
                 val clipboard =
@@ -237,21 +237,21 @@ class UserSpaceViewModel(
                 clipboard.setPrimaryClip(clip)
                 PopTip.show("已复制：$text")
             }
-            // 分享
-            5 -> {
-                val info = detailData.value
-                val url = getUserSpaceUrl()
-                val shareIntent = Intent().also {
-                    it.action = Intent.ACTION_SEND
-                    it.type = "text/plain"
-                    it.putExtra(Intent.EXTRA_SUBJECT, "这个UP主非常nice")
-                    it.putExtra(
-                        Intent.EXTRA_TEXT,
-                        info?.card?.name + " " + url
-                    )
-                }
-                activity.startActivity(Intent.createChooser(shareIntent, "分享"))
-            }
+            // 分享（已禁用）
+//            5 -> {
+//                val info = detailData.value
+//                val url = getUserSpaceUrl()
+//                val shareIntent = Intent().also {
+//                    it.action = Intent.ACTION_SEND
+//                    it.type = "text/plain"
+//                    it.putExtra(Intent.EXTRA_SUBJECT, "这个UP主非常nice")
+//                    it.putExtra(
+//                        Intent.EXTRA_TEXT,
+//                        info?.card?.name + " " + url
+//                    )
+//                }
+//                activity.startActivity(Intent.createChooser(shareIntent, "分享"))
+//            }
             11, 12, 13 -> {
                 archiveViewModel.changeRankOrder(item.action ?: "")
             }

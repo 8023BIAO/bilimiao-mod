@@ -198,18 +198,18 @@ private fun UserSpacePageDetailContent(
                             }
                         }
                     }
-                    myItem {
-                        key = 3
-                        title = "用浏览器打开"
-                    }
+//                    myItem {
+//                        key = 3
+//                        title = "用浏览器打开"
+//                    }
                     myItem {
                         key = 4
                         title = "复制链接"
                     }
-                    myItem {
-                        key = 5
-                        title = "分享"
-                    }
+//                    myItem {
+//                        key = 5
+//                        title = "分享"
+//                    }
                 }
             }
             if (viewModel.currentPage == 2) {

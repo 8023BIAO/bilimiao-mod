@@ -81,6 +81,7 @@ fun MiniVideoItemBox(
             modifier = Modifier
                 .fillMaxWidth()
                 .aspectRatio(672f / 378f)
+                .clip(RoundedCornerShape(5.dp))
         ) {
             if (pic != null) {
                 if (hideCover) {

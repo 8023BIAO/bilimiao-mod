@@ -85,8 +85,13 @@ private class FlagsSettingPageViewModel(
                 val json = MiaoJson.toJson(loginInfo)
                 val prefs = ctx.getSharedPreferences("bilimiao_guest_backup", Context.MODE_PRIVATE)
                 prefs.edit().putString("login_info_backup", json).apply()
-                userStore.logout()  // 复用退出登录逻辑，立即生效
-                Toast.makeText(ctx, "已启用游客模式", Toast.LENGTH_SHORT).show()
+                userStore.logout()  // 复用退出登录逻辑
+                Toast.makeText(ctx, "已启用游客模式，正在重启...", Toast.LENGTH_SHORT).show()
+                val restartIntent = ctx.packageManager.getLaunchIntentForPackage(ctx.packageName)
+                if (restartIntent != null) {
+                    ctx.startActivity(android.content.Intent.makeRestartActivityTask(restartIntent.component))
+                }
+                android.os.Process.killProcess(android.os.Process.myPid())
             } else {
                 Toast.makeText(ctx, "未登录，无需启用游客模式", Toast.LENGTH_SHORT).show()
             }
@@ -98,8 +103,13 @@ private class FlagsSettingPageViewModel(
                     val loginInfo = MiaoJson.fromJson<LoginInfo>(backupJson)
                     BilimiaoCommApp.commApp.saveAuthInfo(loginInfo)
                     prefs.edit().remove("login_info_backup").apply()
-                    userStore.loadInfo()  // 重新加载用户信息，无需重启
-                    Toast.makeText(ctx, "登录信息已恢复", Toast.LENGTH_SHORT).show()
+                    userStore.loadInfo()  // 重新加载用户信息
+                    Toast.makeText(ctx, "登录信息已恢复，正在重启...", Toast.LENGTH_SHORT).show()
+                    val restartIntent = ctx.packageManager.getLaunchIntentForPackage(ctx.packageName)
+                    if (restartIntent != null) {
+                        ctx.startActivity(android.content.Intent.makeRestartActivityTask(restartIntent.component))
+                    }
+                    android.os.Process.killProcess(android.os.Process.myPid())
                 } catch (e: Exception) {
                     Toast.makeText(ctx, "恢复失败，请手动导入身份信息", Toast.LENGTH_LONG).show()
                 }
@@ -211,8 +221,13 @@ private fun FlagsSettingPageContent(
                         cookie_info = cookieInfo
                     )
                     BilimiaoCommApp.commApp.saveAuthInfo(loginInfo)
-                    userStore.loadInfo()  // 加载用户信息，无需重启
-                    Toast.makeText(context, "身份信息导入成功", Toast.LENGTH_SHORT).show()
+                    userStore.loadInfo()  // 加载用户信息
+                    Toast.makeText(context, "身份信息导入成功，正在重启...", Toast.LENGTH_SHORT).show()
+                    val restartIntent = context.packageManager.getLaunchIntentForPackage(context.packageName)
+                    if (restartIntent != null) {
+                        context.startActivity(android.content.Intent.makeRestartActivityTask(restartIntent.component))
+                    }
+                    android.os.Process.killProcess(android.os.Process.myPid())
                 } catch (e: Exception) {
                     Toast.makeText(context, "导入失败：${e.message}", Toast.LENGTH_LONG).show()
                 }
@@ -254,7 +269,12 @@ private fun FlagsSettingPageContent(
                         } ?: throw Exception("无法读取文件")
                     }
                     val count = SettingsExporter.importFromJson(context, jsonString)
-                    Toast.makeText(context, "已导入 $count 项设置，部分设置需重启生效", Toast.LENGTH_LONG).show()
+                    Toast.makeText(context, "已导入 $count 项设置，正在重启...", Toast.LENGTH_SHORT).show()
+                    val restartIntent = context.packageManager.getLaunchIntentForPackage(context.packageName)
+                    if (restartIntent != null) {
+                        context.startActivity(android.content.Intent.makeRestartActivityTask(restartIntent.component))
+                    }
+                    android.os.Process.killProcess(android.os.Process.myPid())
                 } catch (e: Exception) {
                     Toast.makeText(context, "导入失败：${e.message}", Toast.LENGTH_LONG).show()
                 }
