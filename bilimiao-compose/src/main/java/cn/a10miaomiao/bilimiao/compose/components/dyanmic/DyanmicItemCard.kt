@@ -3,6 +3,8 @@ package cn.a10miaomiao.bilimiao.compose.components.dyanmic
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -30,5 +32,6 @@ fun DynamicItemCard(
                 isJumpToUser = isJumpToUser,
             )
         }
+        Spacer(Modifier.height(10.dp))
     }
 }

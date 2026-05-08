@@ -1,6 +1,7 @@
 package cn.a10miaomiao.bilimiao.compose.pages.user
 
 import android.app.Activity
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyColumn
@@ -8,8 +9,11 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -37,7 +41,6 @@ import com.a10miaomiao.bilimiao.store.WindowStore
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.integration.compose.placeholder
-import com.kongzue.dialogx.dialogs.MessageDialog
 import com.kongzue.dialogx.dialogs.PopTip
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -194,6 +197,7 @@ private fun MyFollowerContent(viewModel: MyFollowerViewModel) {
     val finished by viewModel.list.finished.collectAsState()
     val fail by viewModel.list.fail.collectAsState()
     val isRefreshing by viewModel.isRefreshing.collectAsState()
+    var showRemoveDialog by rememberSaveable { mutableStateOf<FollowerUserInfo?>(null) }
 
     if (loading && listData.isEmpty() && fail.isEmpty()) {
         BiliLoadingBox(
@@ -237,6 +241,7 @@ private fun MyFollowerContent(viewModel: MyFollowerViewModel) {
                     modifier = Modifier
                         .size(40.dp)
                         .clip(CircleShape)
+                        .clickable { viewModel.toUserSpace(follower.mid) }
                 )
                 Column(
                     modifier = Modifier
@@ -264,17 +269,7 @@ private fun MyFollowerContent(viewModel: MyFollowerViewModel) {
                 }
                 if (viewModel.isOwner) {
                     TextButton(
-                        onClick = {
-                            MessageDialog.show(
-                                "移除粉丝",
-                                "确定要移除粉丝「${follower.uname}」吗？",
-                                "移除",
-                                "取消",
-                            ).setOkButton { dialog, v ->
-                                viewModel.removeFollower(follower)
-                                false
-                            }
-                        },
+                        onClick = { showRemoveDialog = follower },
                         colors = ButtonDefaults.textButtonColors(
                             contentColor = MaterialTheme.colorScheme.error,
                         ),
@@ -293,5 +288,31 @@ private fun MyFollowerContent(viewModel: MyFollowerViewModel) {
                 loadMore = { viewModel.loadMore() },
             )
         }
+    }
+
+    showRemoveDialog?.let { target ->
+        AlertDialog(
+            onDismissRequest = { showRemoveDialog = null },
+            title = { Text("移除粉丝") },
+            text = { Text("确定要移除粉丝「${target.uname}」吗？") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.removeFollower(target)
+                        showRemoveDialog = null
+                    },
+                    colors = ButtonDefaults.textButtonColors(
+                        contentColor = MaterialTheme.colorScheme.error,
+                    ),
+                ) {
+                    Text("移除")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showRemoveDialog = null }) {
+                    Text("取消")
+                }
+            }
+        )
     }
 }
