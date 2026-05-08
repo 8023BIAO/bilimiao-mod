@@ -887,6 +887,10 @@ class PlayerController(
                 if (aid.isBlank() || cid.isBlank()) return@launch
 
                 val res = BiliApiService.playerAPI.getPlayerV2Info(aid, cid)
+                    .apply {
+                        headers["Referer"] = "https://www.bilibili.com/video/av$aid"
+                        headers["User-Agent"] = "Mozilla/5.0"
+                    }
                     .awaitCall().json<ResponseData<PlayerV2Info>>()
                 if (!res.isSuccess) return@launch
 

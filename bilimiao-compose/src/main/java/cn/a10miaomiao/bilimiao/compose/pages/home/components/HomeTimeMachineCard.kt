@@ -30,7 +30,6 @@ import com.a10miaomiao.bilimiao.comm.entity.region.RegionInfo
 import com.a10miaomiao.bilimiao.comm.utils.UrlUtil
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
-import java.util.Random
 
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
@@ -90,11 +89,7 @@ internal fun HomeTimeMachineTimeCard(
             else -> R.drawable.ic_season_0
         }
     }
-    val emoticons = remember {
-        val random = Random()
-        val emoticonsArr = arrayOf("ε=ε=ε=┏(゜ロ゜;)┛", "(　o=^•ェ•)o　┏━┓", "(/▽＼)", "ヽ(✿ﾟ▽ﾟ)ノ")
-        emoticonsArr[random.nextInt(emoticonsArr.size)]
-    }
+    // 情绪文字已移除
     HomeTimeMachineCard(
         iconModel = R.drawable.ic_time,
         cardName = "当前时间线",
@@ -123,13 +118,14 @@ internal fun HomeTimeMachineTimeCard(
                     }
                 )
             }
-            Text(
-                modifier = Modifier.fillMaxWidth(),
-                text = emoticons,
-                textAlign = TextAlign.End,
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.outline,
-            )
+            // 情绪文字已移除
+            // Text(
+            //     modifier = Modifier.fillMaxWidth(),
+            //     text = emoticons,
+            //     textAlign = TextAlign.End,
+            //     style = MaterialTheme.typography.labelSmall,
+            //     color = MaterialTheme.colorScheme.outline,
+            // )
         }
     }
 }
