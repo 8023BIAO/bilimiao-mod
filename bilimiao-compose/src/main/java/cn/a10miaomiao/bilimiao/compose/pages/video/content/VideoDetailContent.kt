@@ -245,9 +245,10 @@ fun VideoDetailContent(
                             label = {
                                 Text(
                                     text = tag.name,
-                                    style = MaterialTheme.typography.bodyMedium,
+                                    style = MaterialTheme.typography.bodySmall,
                                 )
                             },
+                            shape = RoundedCornerShape(6.dp),
                         )
                     }
                 }
