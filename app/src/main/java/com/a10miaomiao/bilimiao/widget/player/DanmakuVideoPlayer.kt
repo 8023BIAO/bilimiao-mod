@@ -379,7 +379,7 @@ class DanmakuVideoPlayer : StandardGSYVideoPlayer {
         chapterOverlayView.chapters = chapters
         chapterOverlayView.onChapterClick = onChapterClick
         if (chapterOverlayView.parent == null) {
-            mBottomContainer.addView(chapterOverlayView, 0) // 放最上面
+            mBottomContainer.addView(chapterOverlayView) // 放最上层
         }
         chapterOverlayView.visibility = View.VISIBLE
     }

@@ -3,26 +3,23 @@ package com.a10miaomiao.bilimiao.comm.delegate.player
 import android.app.Activity
 import android.view.Menu
 import android.view.View
+import android.util.TypedValue
+import androidx.appcompat.view.ContextThemeWrapper
 import androidx.appcompat.widget.PopupMenu
+import com.a10miaomiao.bilimiao.comm.utils.setCheckMarkTint
 
 class SpeedPopupMenu(
     private val activity: Activity,
     private val anchor: View,
     private val value: Float,
     private val list: List<Float>,
-    themeColor: Int, // 保留兼容但不使用（Material3 isChecked 走主题）
+    private val themeColor: Int,
 ) {
-    private val popupMenu = PopupMenu(activity, anchor)
     private var currentValue = value
 
-    init {
-        popupMenu.menu.apply { initMenu() }
-        updateChecked()
-    }
-
-    private fun updateChecked() {
-        for (i in 0 until popupMenu.menu.size()) {
-            popupMenu.menu.getItem(i).isChecked = (list[i] == currentValue)
+    private fun PopupMenu.updateChecked() {
+        for (i in 0 until menu.size()) {
+            menu.getItem(i).isChecked = (list[i] == currentValue)
         }
     }
 
@@ -34,17 +31,36 @@ class SpeedPopupMenu(
         }
     }
 
+    private var changedSpeedListener: ((Float) -> Unit)? = null
+
     fun setOnChangedSpeedListener(changedSpeed: (Float) -> Unit) {
-        popupMenu.setOnMenuItemClickListener {
-            val position = it.itemId
-            currentValue = list[position]
+        changedSpeedListener = changedSpeed
+    }
+
+    private fun createPopupMenu(): PopupMenu {
+        val wrapper = ContextThemeWrapper(activity, activity.theme).apply {
+            theme.applyStyle(androidx.appcompat.R.style.Theme_AppCompat_Light, true)
+            theme.applyStyle(android.R.style.Theme_Material_Light, true)
+            val typedValue = TypedValue()
+            theme.resolveAttribute(androidx.appcompat.R.attr.colorPrimary, typedValue, true)
+        }
+        return PopupMenu(wrapper, anchor).apply {
+            menu.apply { initMenu() }
             updateChecked()
-            changedSpeed(currentValue)
-            false
+            setOnMenuItemClickListener {
+                val position = it.itemId
+                currentValue = list[position]
+                updateChecked()
+                changedSpeedListener?.invoke(currentValue)
+                false
+            }
         }
     }
 
     fun show() {
-        popupMenu.show()
+        createPopupMenu().apply {
+            show()
+            setCheckMarkTint(themeColor)
+        }
     }
 }

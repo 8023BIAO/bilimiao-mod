@@ -244,7 +244,8 @@ private fun MyFollowerContent(viewModel: MyFollowerViewModel) {
                     modifier = Modifier
                         .weight(1f)
                         .heightIn(min = 40.dp)
-                        .padding(horizontal = 8.dp),
+                        .padding(horizontal = 8.dp)
+                        .clickable { viewModel.toUserSpace(follower.mid) },
                     verticalArrangement = Arrangement.Center,
                 ) {
                     Text(

@@ -182,15 +182,15 @@ class PlayerDelegate2(
             picInPicHelper = PicInPicHelper(activity, player)
         }
         controller.initController()
-        player.subtitleLoader = this::loadSubtitleData
-        player.subtitleSourceSelector = controller::getDefaultSubtitle
+        player?.subtitleLoader = this::loadSubtitleData
+        player?.subtitleSourceSelector = controller::getDefaultSubtitle
         //音频焦点冲突时是否释放
-        player.isReleaseWhenLossAudio = true
+        player?.isReleaseWhenLossAudio = true
 
         // 主题监听
         themeDelegate.observeTheme(activity, Observer {
             val themeColor = it.toInt()
-            player.updateThemeColor(activity, themeColor)
+            player?.updateThemeColor(activity, themeColor)
             areaLimitBoxController.updateThemeColor(themeColor)
             errorMessageBoxController.updateThemeColor(themeColor)
             completionBoxController.updateThemeColor(themeColor)
@@ -436,9 +436,9 @@ class PlayerDelegate2(
 
     fun changedSpeed(newSpeed: Float) {
         if (speed != newSpeed) {
-            lastPosition = player.currentPositionWhenPlaying
+            lastPosition = player?.currentPositionWhenPlaying ?: 0L
             speed = newSpeed
-            player.setSpeed(speed, true)
+            player?.setSpeed(speed, true)
             PopTip.show("已切换到${speed}倍速").showTop()
             playerCoroutineScope.launch(Dispatchers.IO) {
                 SettingPreferences.edit(activity) {
@@ -450,7 +450,7 @@ class PlayerDelegate2(
 
     fun changedQuality(newQuality: Int) {
         if (quality != newQuality) {
-            lastPosition = player.currentPositionWhenPlaying
+            lastPosition = player?.currentPositionWhenPlaying ?: 0L
             quality = newQuality
             PopTip.show("正在切换清晰度").showTop()
             playerCoroutineScope.launch(Dispatchers.Main) {
@@ -483,9 +483,9 @@ class PlayerDelegate2(
             quality = sourceInfo.quality
             playerSourceInfo = sourceInfo
             loadingBoxController.print("成功")
-            player.releaseDanmaku()
-            player.danmakuParser = danmukuParser
-            player.setUp(
+            player?.releaseDanmaku()
+            player?.danmakuParser = danmukuParser
+            player?.setUp(
                 sourceInfo.url,
                 false,
                 null,
@@ -494,7 +494,7 @@ class PlayerDelegate2(
             )
             loadingBoxController.hideLoading()
             if (lastPosition > 0L) {
-                player.seekOnStart = lastPosition
+                player?.seekOnStart = lastPosition
                 lastPosition = 0L
             } else if (
                 sourceInfo.lastPlayCid == source.id
@@ -502,7 +502,7 @@ class PlayerDelegate2(
                 && sourceInfo.lastPlayTime > 0L
                 && sourceInfo.lastPlayTime < sourceInfo.duration - 10000
             ) {
-                player.seekOnStart = sourceInfo.lastPlayTime
+                player?.seekOnStart = sourceInfo.lastPlayTime
                 lastPosition = 0L
                 val lastTimeStr = NumberUtil.converDuration(sourceInfo.lastPlayTime / 1000)
                 controller.postPrepared(sourceInfo.lastPlayCid) {
@@ -510,7 +510,7 @@ class PlayerDelegate2(
                         .showTop()
                         .showLong()
                         .setButton { dialog, v ->
-                            player.startPlayLogic()
+                            player?.startPlayLogic()
                             false
                         }
                 }
@@ -519,8 +519,8 @@ class PlayerDelegate2(
                 historyReport(0L)
             }
             lastReportProgress = 0L
-            player.startPlayLogic()
-            player.requestLayout()
+            player?.startPlayLogic()
+            player?.requestLayout()
 
             if (isChangedQuality) {
                 if (sourceInfo.quality == quality) {
@@ -529,7 +529,7 @@ class PlayerDelegate2(
                     PopTip.show("清晰度切换失败").showTop()
                 }
             } else {
-                player.subtitleSourceList = withContext(Dispatchers.IO) {
+                player?.subtitleSourceList = withContext(Dispatchers.IO) {
                     source.getSubtitles().map {
                         DanmakuVideoPlayer.SubtitleSourceInfo(
                             id = it.id,
@@ -575,7 +575,7 @@ class PlayerDelegate2(
                 val res = MiaoHttp.request {
                     url = UrlUtil.autoHttps(subtitleUrl)
                 }.awaitCall().json<SubtitleJsonInfo>()
-                player.subtitleBody = res.body.map {
+                player?.subtitleBody = res.body.map {
                     DanmakuVideoPlayer.SubtitleItemInfo(
                         from = (it.from * 1000).toLong(),
                         to = (it.to * 1000).toLong(),
@@ -595,7 +595,7 @@ class PlayerDelegate2(
      * 记录播放位置
      */
     fun reloadPlayer() {
-        lastPosition = player.currentPositionWhenPlaying
+        lastPosition = player?.currentPositionWhenPlaying ?: 0L
         playerCoroutineScope.launch(Dispatchers.Main) {
             playerSource?.defaultPlayerSource?.let {
                 it.lastPlayCid = ""
@@ -650,7 +650,7 @@ class PlayerDelegate2(
                 loadPlayerSource()
                 // loadPlayerSource 末尾已在成功路径刷新通知栏元数据
                 // （updateMetadata + setPlaying），无需再调 bindPlayer
-                player.setSpeed(speed, true)
+                player?.setSpeed(speed, true)
                 // 播放倍速提示
                 if (speed != 1f) {
                     PopTip.show("注意，当前为${speed}倍速").showTop()
@@ -658,13 +658,13 @@ class PlayerDelegate2(
             }
             // 是否显示分P和剧集按钮
             if (source is VideoPlayerSource && source.pages.size > 1) {
-                player.setExpandButtonText("分P")
-                player.showExpandButton()
+                player?.setExpandButtonText("分P")
+                player?.showExpandButton()
             } else if (source is BangumiPlayerSource && source.episodes.size > 1) {
-                player.setExpandButtonText("剧集")
-                player.showExpandButton()
+                player?.setExpandButtonText("剧集")
+                player?.showExpandButton()
             } else {
-                player.hideExpandButton()
+                player?.hideExpandButton()
             }
         }
         // 添加到用户库历史记录
@@ -738,16 +738,16 @@ class PlayerDelegate2(
             picInPicHelper?.onPictureInPictureModeChanged(isInPictureInPictureMode)
             if (isInPictureInPictureMode) { // 进入画中画模式，则隐藏其它控件
                 // 隐藏视频控制器
-                player.hideController()
+                player?.hideController()
                 //
-                player.isPicInPicMode = true
+                player?.isPicInPicMode = true
                 // 视频组件全屏
                 scaffoldApp.fullScreenPlayer = true
                 // 调整弹幕样式，调小字体，限制行数
             } else {
                 scaffoldApp.fullScreenPlayer =
-                    player.mode == DanmakuVideoPlayer.PlayerMode.FULL
-                player.isPicInPicMode = false
+                    player?.mode == DanmakuVideoPlayer.PlayerMode.FULL
+                player?.isPicInPicMode = false
             }
             playerCoroutineScope.launch {
                 SettingPreferences.getData(activity) {
@@ -771,7 +771,7 @@ class PlayerDelegate2(
     }
 
     override fun currentPosition(): Long {
-        return player.currentPosition
+        return player?.currentPosition ?: 0L
     }
 
     override fun sendDanmaku(
@@ -789,9 +789,9 @@ class PlayerDelegate2(
             time = danmakuPosition
             borderColor = 0xFFFFFFFF.toInt()
         }
-        player.addDanmaku(danmaku)
+        player?.addDanmaku(danmaku)
         if (!isPlaying()) {
-            player.onVideoResume()
+            player?.onVideoResume()
         }
     }
 
@@ -837,7 +837,7 @@ class PlayerDelegate2(
     }
 
     fun setHoldStatus(isHold: Boolean) {
-        player.setHoldStatus(isHold)
+        player?.setHoldStatus(isHold)
         completionBoxController.setHoldStatus(isHold)
     }
 

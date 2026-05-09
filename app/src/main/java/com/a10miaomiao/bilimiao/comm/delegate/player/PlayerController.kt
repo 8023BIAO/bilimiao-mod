@@ -115,7 +115,7 @@ class PlayerController(
             ?: SettingConstants.PLAYER_FULL_MODE_AUTO
     }
 
-    fun initController() = player.run {
+    fun initController() = player?.run {
         val that = this@PlayerController
         // 注册 seek 总线供评论区时间戳使用
         PlayerSeekBus.onSeek = { ms -> seekTo(ms) }
@@ -170,7 +170,7 @@ class PlayerController(
                 smallScreen()
             } else {
                 // 小窗浮窗模式：点全屏改为调整窗口大小适配视频比例
-                if (player.mode == DanmakuVideoPlayer.PlayerMode.SMALL_FLOAT) {
+                if (player?.mode == DanmakuVideoPlayer.PlayerMode.SMALL_FLOAT) {
                     resizeSmallWindowToVideoRatio()
                     return@launch
                 }
@@ -188,7 +188,7 @@ class PlayerController(
     fun fullScreen(fullMode: Int, onlyFull: Boolean = false) {
         this.onlyFull = onlyFull
         canAutoCloseFullScreen = false
-        player.mode = DanmakuVideoPlayer.PlayerMode.FULL
+        player?.mode = DanmakuVideoPlayer.PlayerMode.FULL
         scaffoldApp.fullScreenPlayer = true
         // 全屏播放时允许横屏
         activity.requestedOrientation = when (fullMode) {
@@ -234,7 +234,7 @@ class PlayerController(
             val videoH = sourceInfo.height ?: return
             if (videoH == 0) return
 
-            val parent = player.parent as? View ?: return
+            val parent = player?.parent as? View ?: return
             val wm = activity.getSystemService(Context.WINDOW_SERVICE) as? WindowManager ?: return
             val lp = parent.layoutParams as? WindowManager.LayoutParams ?: return
 
@@ -257,10 +257,10 @@ class PlayerController(
      * 退出全屏
      */
     fun smallScreen() {
-        if (player.mode == DanmakuVideoPlayer.PlayerMode.SMALL_FLOAT) {
+        if (player?.mode == DanmakuVideoPlayer.PlayerMode.SMALL_FLOAT) {
             explicitExitSmallWindow = true
         }
-        player.mode = DanmakuVideoPlayer.PlayerMode.SMALL_TOP
+        player?.mode = DanmakuVideoPlayer.PlayerMode.SMALL_TOP
         updatePlayerMode(activity.resources.configuration)
         scaffoldApp.fullScreenPlayer = false
         activity.requestedOrientation = getAppSettingScreenOrientation()
@@ -281,8 +281,8 @@ class PlayerController(
     }
 
     fun updatePlayerMode(config: Configuration) {
-        if (player.mode != DanmakuVideoPlayer.PlayerMode.FULL) {
-            player.mode = if (config.orientation == ScaffoldView.VERTICAL) {
+        if (player?.mode != DanmakuVideoPlayer.PlayerMode.FULL) {
+            player?.mode = if (config.orientation == ScaffoldView.VERTICAL) {
                 DanmakuVideoPlayer.PlayerMode.SMALL_TOP
             } else {
                 DanmakuVideoPlayer.PlayerMode.SMALL_FLOAT
@@ -354,7 +354,7 @@ class PlayerController(
         }
         val danmakuShow = (preferences[SettingPreferences.DanmakuEnable] ?: true) &&
                 (preferences[danmakuMode.show] ?: true)
-        player.isShowDanmaku = danmakuShow
+        player?.isShowDanmaku = danmakuShow
 
         // 滚动弹幕显示
         val danmakuR2LShow = preferences[danmakuMode.r2lShow] ?: true
@@ -431,8 +431,8 @@ class PlayerController(
                 it[DanmakuEnable] ?: true
             }
             if (isEnable) {
-                val show = !player.isShowDanmaku
-                player.isShowDanmaku = show
+                val show = !(player?.isShowDanmaku ?: false)
+                player?.isShowDanmaku = show
                 SettingPreferences.edit(activity) {
                     it[DanmakuDefault.show] = show
                     it[danmakuMode.show] = show
@@ -448,7 +448,7 @@ class PlayerController(
                                 it[danmakuMode.show] = true
                             }
                         }
-                        player.isShowDanmaku = true
+                        player?.isShowDanmaku = true
                         false
                     }
             }
@@ -460,16 +460,16 @@ class PlayerController(
         val show = SettingPreferences.run {
             preferences[PlayerBottomProgressBarShow] ?: 0
         }
-        player.showBottomProgressBarInSmallMode = (
+        player?.showBottomProgressBarInSmallMode = (
             show and SettingConstants.PLAYER_BOTTOM_PROGRESS_BAR_SHOW_IN_SMALL != 0
         )
-        player.showBottomProgressBarInFullMode = (
+        player?.showBottomProgressBarInFullMode = (
             show and SettingConstants.PLAYER_BOTTOM_PROGRESS_BAR_SHOW_IN_FULL != 0
         )
-        player.showBottomProgressBarInPipMode = (
+        player?.showBottomProgressBarInPipMode = (
             show and SettingConstants.PLAYER_BOTTOM_PROGRESS_BAR_SHOW_IN_PIP != 0
         )
-        player.enabledAudioFocus = SettingPreferences.run {
+        player?.enabledAudioFocus = SettingPreferences.run {
             preferences[PlayerAudioFocus] ?: true
         }
         showSubtitle = preferences[SettingPreferences.PlayerSubtitleShow] ?: true
@@ -513,7 +513,7 @@ class PlayerController(
             userStore = userStore,
             list = sourceInfo.acceptList,
             value = delegate.quality,
-            themeColor = player.themeColor,
+            themeColor = player?.themeColor ?: 0,
         )
         popup.setOnChangedQualityListener(delegate::changedQuality)
         popup.show()
@@ -529,7 +529,7 @@ class PlayerController(
                 anchor = view,
                 value = delegate.speed,
                 list = speedValueSets.map { it.toFloat() }.sorted(),
-                themeColor = player.themeColor,
+                themeColor = player?.themeColor ?: 0,
             )
             popup.setOnChangedSpeedListener(delegate::changedSpeed)
             popup.show()
@@ -607,14 +607,14 @@ class PlayerController(
             return
         }
         if (delegate.isPlaying()) {
-            player.onVideoPause()
-            player.hideController()
+            player?.onVideoPause()
+            player?.hideController()
         }
         activity.openBottomSheet(SendDanmakuPage())
     }
 
     fun holdUpPlayer(view: View) {
-        if (player.mode == DanmakuVideoPlayer.PlayerMode.SMALL_FLOAT) {
+        if (player?.mode == DanmakuVideoPlayer.PlayerMode.SMALL_FLOAT) {
             explicitExitSmallWindow = true
         }
         scaffoldApp.holdUpPlayer()
@@ -661,11 +661,11 @@ class PlayerController(
                     activity = activity,
                     anchor = anchor,
                     value = GSYVideoType.getShowType(),
-                    themeColor = player.themeColor,
+                    themeColor = player?.themeColor ?: 0,
                 )
                 popup.setOnChangedScaleListener { type ->
                     GSYVideoType.setShowType(type)
-                    player.updateTextureViewShowType()
+                    player?.updateTextureViewShowType()
                     scope.launch {
                         SettingPreferences.edit(activity) {
                             it[PlayerScreenType] = type
@@ -700,7 +700,7 @@ class PlayerController(
 
     fun onBackClick() {
         if (!scaffoldApp.fullScreenPlayer || onlyFull) {
-            if (player.mode == DanmakuVideoPlayer.PlayerMode.SMALL_FLOAT) {
+            if (player?.mode == DanmakuVideoPlayer.PlayerMode.SMALL_FLOAT) {
                 explicitExitSmallWindow = true
             }
             delegate.closePlayer()
@@ -722,12 +722,12 @@ class PlayerController(
         preparedRunQueue.forEach {
             val (id, action) = it
             if (id == delegate.playerSourceId) {
-                player.post(action)
+                player?.post(action)
             }
         }
         preparedRunQueue = mutableListOf()
         // 播放器准备完成后重新应用倍速
-        player.setSpeed(delegate.speed, true)
+        player?.setSpeed(delegate.speed, true)
         // 自动全屏播放检查（仅首次预备）
         if (!hasCheckedAutoFullScreen) {
             hasCheckedAutoFullScreen = true
@@ -741,7 +741,7 @@ class PlayerController(
      * 播放结束
      */
     override fun onAutoCompletion() {
-        delegate.historyReport(player.currentPosition)
+        delegate.historyReport(player?.currentPosition ?: 0L)
         scope.launch {
             val currentPlayerSourceInfo = delegate.playerSource ?: return@launch
             val nextPlayerSourceInfo = currentPlayerSourceInfo.next()
@@ -916,13 +916,13 @@ class PlayerController(
                 }
 
                 withContext(Dispatchers.Main) {
-                    player.setChapters(chapters) { startMs ->
-                        player.seekTo(startMs)
+                    player?.setChapters(chapters) { startMs ->
+                        player?.seekTo(startMs)
                     }
                 }
             } catch (e: Exception) {
                 miaoLogger().e("ChapterSegments", "获取章节异常", e)
-                withContext(Dispatchers.Main) { player.hideChapters() }
+                withContext(Dispatchers.Main) { player?.hideChapters() }
             }
         }
     }

@@ -14,7 +14,9 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.layout.ContentScale
@@ -57,13 +59,15 @@ private fun ImagesScrollItem(
 //        )
 //    ) {
     Box(
-        modifier = modifier.clickable {
-            previewerController.enterTransform(
-                state = previewerState,
-                models = imageModels,
-                index = index
-            )
-        }
+        modifier = modifier
+            .clip(RoundedCornerShape(8.dp))
+            .clickable {
+                previewerController.enterTransform(
+                    state = previewerState,
+                    models = imageModels,
+                    index = index
+                )
+            }
     ) {
         TransformItemView(
             key = model.originalUrl,

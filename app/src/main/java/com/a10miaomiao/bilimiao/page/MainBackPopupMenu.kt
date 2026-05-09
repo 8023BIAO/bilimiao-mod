@@ -4,6 +4,7 @@ import android.app.Activity
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
+import androidx.appcompat.view.ContextThemeWrapper
 import androidx.appcompat.widget.PopupMenu
 import com.a10miaomiao.bilimiao.MainActivity
 import com.a10miaomiao.bilimiao.comm.delegate.player.BasePlayerDelegate
@@ -14,18 +15,9 @@ class MainBackPopupMenu(
     private val basePlayerDelegate: BasePlayerDelegate,
 ): PopupMenu.OnMenuItemClickListener {
 
-    private val popupMenu = PopupMenu(activity, anchor)
-
-    init {
-        popupMenu.menu.apply {
-            initMenu()
-        }
-        popupMenu.setOnMenuItemClickListener(this)
-    }
-
-    private fun Menu.initMenu() {
-        add(Menu.FIRST, 0, 0, "返回首页")
-        add(Menu.FIRST, 1, 0, "退出播放")
+    private fun PopupMenu.initMenu() {
+        menu.add(Menu.FIRST, 0, 0, "返回首页")
+        menu.add(Menu.FIRST, 1, 0, "退出播放")
     }
 
     override fun onMenuItemClick(item: MenuItem?): Boolean {
@@ -42,8 +34,18 @@ class MainBackPopupMenu(
         return false
     }
 
+    private fun createPopupMenu(): PopupMenu {
+        val wrapper = ContextThemeWrapper(activity, activity.theme)
+        return PopupMenu(wrapper, anchor).apply {
+            initMenu()
+            setOnMenuItemClickListener(this@MainBackPopupMenu)
+        }
+    }
+
     fun show() {
-        popupMenu.show()
+        createPopupMenu().apply {
+            show()
+        }
     }
 
 

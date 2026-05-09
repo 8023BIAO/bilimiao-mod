@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -59,13 +60,15 @@ private fun ImagesGridItem(
 //        )
 //    ) {
     Box(
-        modifier = modifier.clickable {
-            previewerController.enterTransform(
-                state = previewerState,
-                models = imageModels,
-                index = index
-            )
-        }
+        modifier = modifier
+            .clip(RoundedCornerShape(8.dp))
+            .clickable {
+                previewerController.enterTransform(
+                    state = previewerState,
+                    models = imageModels,
+                    index = index
+                )
+            }
     ) {
         TransformItemView(
             key = model.originalUrl,

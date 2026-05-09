@@ -3,10 +3,12 @@ package com.a10miaomiao.bilimiao.comm.delegate.player
 import android.app.Activity
 import android.view.Menu
 import android.view.View
+import androidx.appcompat.view.ContextThemeWrapper
 import androidx.appcompat.widget.PopupMenu
 import com.a10miaomiao.bilimiao.R
 import com.a10miaomiao.bilimiao.comm.delegate.player.entity.PlayerSourceInfo
 import com.a10miaomiao.bilimiao.comm.store.UserStore
+import com.a10miaomiao.bilimiao.comm.utils.setCheckMarkTint
 
 class QualityPopupMenu(
     private val activity: Activity,
@@ -14,21 +16,15 @@ class QualityPopupMenu(
     private val userStore: UserStore,
     private val list: List<PlayerSourceInfo.AcceptInfo>,
     private val value: Int,
-    themeColor: Int, // 保留兼容但不使用（Material3 isChecked 走主题）
+    private val themeColor: Int,
 ) {
-    private val popupMenu = PopupMenu(activity, anchor)
     val MAX_QUALITY_NOT_LOGIN = 48 // 48[480P 清晰]
     val MAX_QUALITY_NOT_VIP = 80 // 80[1080P 高清]
     private var currentValue = value
 
-    init {
-        popupMenu.menu.apply { initMenu() }
-        updateChecked()
-    }
-
-    private fun updateChecked() {
-        for (i in 0 until popupMenu.menu.size()) {
-            popupMenu.menu.getItem(i).isChecked = (list[i].quality == currentValue)
+    private fun PopupMenu.updateChecked() {
+        for (i in 0 until menu.size()) {
+            menu.getItem(i).isChecked = (list[i].quality == currentValue)
         }
     }
 
@@ -47,17 +43,31 @@ class QualityPopupMenu(
         }
     }
 
+    private var changedQualityListener: ((Int) -> Unit)? = null
+
     fun setOnChangedQualityListener(changedQuality: (Int) -> Unit) {
-        popupMenu.setOnMenuItemClickListener {
-            val position = it.itemId
-            currentValue = list[position].quality
+        changedQualityListener = changedQuality
+    }
+
+    private fun createPopupMenu(): PopupMenu {
+        val wrapper = ContextThemeWrapper(activity, activity.theme)
+        return PopupMenu(wrapper, anchor).apply {
+            menu.apply { initMenu() }
             updateChecked()
-            changedQuality(currentValue)
-            false
+            setOnMenuItemClickListener {
+                val position = it.itemId
+                currentValue = list[position].quality
+                updateChecked()
+                changedQualityListener?.invoke(currentValue)
+                false
+            }
         }
     }
 
     fun show() {
-        popupMenu.show()
+        createPopupMenu().apply {
+            show()
+            setCheckMarkTint(themeColor)
+        }
     }
 }

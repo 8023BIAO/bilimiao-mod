@@ -118,6 +118,6 @@ class ChapterOverlayView @JvmOverloads constructor(
             }
             return true
         }
-        return true
+        return false
     }
 }

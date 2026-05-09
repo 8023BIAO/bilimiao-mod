@@ -4,39 +4,30 @@ import android.app.Activity
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
+import androidx.appcompat.view.ContextThemeWrapper
 import androidx.appcompat.widget.PopupMenu
+import com.a10miaomiao.bilimiao.comm.utils.setCheckMarkTint
 
 class MyPopupMenu(
     private val activity: Activity,
     private val myPage: MyPage,
     private val myPageMenu: MyPageMenu,
     private val anchorView: View,
-    themeColor: Int = 0, // 保留兼容但不使用（Material3 isChecked 走主题）
+    private val themeColor: Int = 0,
 ): PopupMenu.OnMenuItemClickListener {
 
-    private val popupMenu = PopupMenu(activity, anchorView)
     private var currentCheckedKey = myPageMenu.checkedKey
 
-    init {
-        popupMenu.menu.apply {
-            initMenu()
-        }
-        popupMenu.setOnMenuItemClickListener(this)
-        if (myPageMenu.checkable) {
-            updateChecked()
-        }
-    }
-
-    private fun updateChecked() {
-        for (i in 0 until popupMenu.menu.size()) {
-            val item = popupMenu.menu.getItem(i)
+    private fun PopupMenu.updateChecked() {
+        for (i in 0 until menu.size()) {
+            val item = menu.getItem(i)
             val shouldCheck = myPageMenu.checkable && item.itemId == currentCheckedKey
             item.isChecked = shouldCheck
         }
     }
 
-    private fun Menu.initMenu() {
-        addItems(Menu.FIRST, myPageMenu, true)
+    private fun PopupMenu.initMenu() {
+        menu.addItems(Menu.FIRST, myPageMenu, true)
     }
 
     private fun Menu.addItems(groupId: Int, myMenu: MyPageMenu, topLevel: Boolean = false) {
@@ -67,6 +58,7 @@ class MyPopupMenu(
     }
 
     override fun onMenuItemClick(item: MenuItem): Boolean {
+        currentCheckedKey = item.itemId
         val myItem = myPageMenu.findMyItemByKey(item.itemId)
         if (myItem != null) {
             myPage.onMenuItemClick(anchorView, myItem)
@@ -74,8 +66,22 @@ class MyPopupMenu(
         return false
     }
 
+    private fun createPopupMenu(): PopupMenu {
+        val wrapper = ContextThemeWrapper(activity, activity.theme)
+        return PopupMenu(wrapper, anchorView).apply {
+            menu.apply { initMenu() }
+            setOnMenuItemClickListener(this@MyPopupMenu)
+            if (myPageMenu.checkable) {
+                updateChecked()
+            }
+        }
+    }
+
     fun show() {
-        popupMenu.show()
+        createPopupMenu().apply {
+            show()
+            setCheckMarkTint(themeColor)
+        }
     }
 
 }
