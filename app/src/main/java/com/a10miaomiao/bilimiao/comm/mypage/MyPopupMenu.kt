@@ -5,6 +5,7 @@ import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import androidx.appcompat.widget.PopupMenu
+import com.a10miaomiao.bilimiao.comm.popupContext
 import com.a10miaomiao.bilimiao.comm.utils.setCheckMarkTint
 
 class MyPopupMenu(
@@ -15,7 +16,7 @@ class MyPopupMenu(
     themeColor: Int = 0,
 ): PopupMenu.OnMenuItemClickListener {
 
-    private val popupMenu = PopupMenu(activity, anchorView)
+    private val popupMenu = PopupMenu(activity.popupContext(), anchorView)
     private var currentCheckedKey = myPageMenu.checkedKey
 
     init {

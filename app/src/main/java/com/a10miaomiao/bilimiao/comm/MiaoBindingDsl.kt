@@ -1,9 +1,12 @@
 package com.a10miaomiao.bilimiao.comm
 
+import android.app.Activity
 import android.content.Context
+import android.content.res.Configuration
 import android.graphics.drawable.Drawable
 import android.util.TypedValue
 import android.widget.ImageView
+import android.view.ContextThemeWrapper
 import com.a10miaomiao.bilimiao.R
 import com.a10miaomiao.bilimiao.comm.utils.UrlUtil
 import com.bumptech.glide.Glide
@@ -43,4 +46,14 @@ fun Context.attr(resid: Int): Int {
     val typedValue = TypedValue()
     this.theme.resolveAttribute(resid, typedValue, true)
     return typedValue.resourceId
+}
+
+/**
+ * 返回一个主题正确的 Context，用于 PopupMenu 等需要正确主题解析的组件
+ * 绕过了 configChanges="uiMode" 导致的 Activity Theme 缓存过期问题
+ */
+fun Activity.popupContext(): Context {
+    val config = Configuration(resources.configuration)
+    return ContextThemeWrapper(applicationContext, R.style.Theme_Bilimiao)
+        .createConfigurationContext(config)
 }

@@ -28,6 +28,7 @@ import com.a10miaomiao.bilimiao.comm.datastore.SettingPreferences
 import com.a10miaomiao.bilimiao.comm.delegate.helper.StatusBarHelper
 import com.a10miaomiao.bilimiao.comm.dialogx.showTop
 import com.a10miaomiao.bilimiao.comm.navigation.openBottomSheet
+import com.a10miaomiao.bilimiao.comm.popupContext
 import com.a10miaomiao.bilimiao.comm.store.AppStore
 import com.a10miaomiao.bilimiao.comm.store.PlayListStore
 import com.a10miaomiao.bilimiao.comm.store.PlayerStore
@@ -551,7 +552,7 @@ class PlayerController(
     fun showFullModeMenu(view: View) {
         val fullModeMenuItemClick = this::fullModeMenuItemClick
         scope.launch {
-            val popupMenu = PopupMenu(activity, view)
+            val popupMenu = PopupMenu(activity.popupContext(), view)
             val fullMode = SettingPreferences.mapData(activity) {
                 it[PlayerFullMode] ?: SettingConstants.PLAYER_FULL_MODE_AUTO
             }
@@ -593,7 +594,7 @@ class PlayerController(
 
     fun showMoreMenu(view: View) {
         moreMenuAnchor = view
-        val popupMenu = PopupMenu(activity, view)
+        val popupMenu = PopupMenu(activity.popupContext(), view)
         popupMenu.inflate(R.menu.player_top_more)
         popupMenu.setOnMenuItemClickListener(this::moreMenuItemClick)
         popupMenu.show()
