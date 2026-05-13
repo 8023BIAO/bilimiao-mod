@@ -137,8 +137,9 @@ class DanmakuVideoPlayer : StandardGSYVideoPlayer {
                 RelativeLayout.LayoutParams.MATCH_PARENT,
                 RelativeLayout.LayoutParams.WRAP_CONTENT
             ).apply {
-                // 紧贴在进度条上方
-                addRule(RelativeLayout.ABOVE, R.id.progress)
+                // 紧贴进度条上方：layout_bottom在底部，SeekBar在其中偏上10dp
+                addRule(RelativeLayout.ABOVE, R.id.layout_bottom)
+                bottomMargin = (-10f * context.resources.displayMetrics.density).toInt()
             }
         }
     }
