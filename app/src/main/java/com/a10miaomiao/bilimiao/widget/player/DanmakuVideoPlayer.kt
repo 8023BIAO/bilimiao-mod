@@ -137,9 +137,8 @@ class DanmakuVideoPlayer : StandardGSYVideoPlayer {
                 RelativeLayout.LayoutParams.MATCH_PARENT,
                 RelativeLayout.LayoutParams.WRAP_CONTENT
             ).apply {
-                // 紧贴进度条上方：layout_bottom在底部，SeekBar在其中偏上10dp
-                addRule(RelativeLayout.ABOVE, R.id.layout_bottom)
-                bottomMargin = (-10f * context.resources.displayMetrics.density).toInt()
+                // 固定在底部，后续通过 post 回调精确移动到 SeekBar 上方
+                addRule(RelativeLayout.ALIGN_PARENT_BOTTOM)
             }
         }
     }
@@ -158,18 +157,22 @@ class DanmakuVideoPlayer : StandardGSYVideoPlayer {
             mRootLayout.addView(chapterOverlayView)
         }
         chapterOverlayView.visibility = View.VISIBLE
-        // 与SeekBar位置对齐，确保章节刻度1:1
+        // 精确对齐 SeekBar：获取 SeekBar 的实际像素位置来设置章节条的 margin 和高度偏移
         chapterOverlayView.post {
-            val progressBar = findViewById<View>(R.id.progress) ?: return@post
-            val loc = IntArray(2)
-            progressBar.getLocationInWindow(loc)
-            val selfLoc = IntArray(2)
-            chapterOverlayView.getLocationInWindow(selfLoc)
-            val leftPad = loc[0] - selfLoc[0]
-            val rightPad = (selfLoc[0] + chapterOverlayView.width) - (loc[0] + progressBar.width)
-            if (leftPad >= 0 && rightPad >= 0) {
-                chapterOverlayView.setPadding(leftPad, 0, rightPad, 0)
-            }
+            val seekBar = findViewById<View>(R.id.progress) ?: return@post
+            val overlayRect = android.graphics.Rect()
+            val seekRect = android.graphics.Rect()
+            chapterOverlayView.getGlobalVisibleRect(overlayRect)
+            seekBar.getGlobalVisibleRect(seekRect)
+
+            val lp = chapterOverlayView.layoutParams as RelativeLayout.LayoutParams
+            // X轴对齐：左右margin = SeekBar相对本视图的偏移
+            lp.leftMargin = (seekRect.left - overlayRect.left).coerceAtLeast(0)
+            lp.rightMargin = (overlayRect.right - seekRect.right).coerceAtLeast(0)
+            // Y轴对齐：上移使底边贴着 SeekBar 顶边
+            val offsetY = overlayRect.bottom - seekRect.top
+            chapterOverlayView.translationY = -offsetY.toFloat()
+            chapterOverlayView.requestLayout()
         }
     }
 

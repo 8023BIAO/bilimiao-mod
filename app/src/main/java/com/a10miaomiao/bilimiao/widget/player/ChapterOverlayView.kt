@@ -26,7 +26,7 @@ class ChapterOverlayView @JvmOverloads constructor(
     private val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         // 用 DP 固定大小，不随系统字体缩放
         textSize = TypedValue.applyDimension(
-            TypedValue.COMPLEX_UNIT_DIP, 11f, context.resources.displayMetrics
+            TypedValue.COMPLEX_UNIT_DIP, 10f, context.resources.displayMetrics
         )
         color = 0xFFFFFFFF.toInt()
         typeface = Typeface.DEFAULT_BOLD
@@ -44,7 +44,7 @@ class ChapterOverlayView @JvmOverloads constructor(
 
     // 全部用 DP 固定值，不随系统缩放
     private val barHeight = TypedValue.applyDimension(
-        TypedValue.COMPLEX_UNIT_DIP, 18f, context.resources.displayMetrics
+        TypedValue.COMPLEX_UNIT_DIP, 14f, context.resources.displayMetrics
     )
     private val dividerWidth = TypedValue.applyDimension(
         TypedValue.COMPLEX_UNIT_DIP, 2f, context.resources.displayMetrics
@@ -63,16 +63,11 @@ class ChapterOverlayView @JvmOverloads constructor(
         super.onDraw(canvas)
         if (chapters.isEmpty() || width == 0) return
 
-        val totalW = width.toFloat()
-        val totalH = height.toFloat()
-        val drawL = paddingLeft.toFloat()
-        val drawR = (width - paddingRight).toFloat()
-        val drawW = drawR - drawL
+        val w = width.toFloat()
+        if (w <= 0) return
 
-        if (drawW <= 0) return
-
-        // 背景条（全宽）
-        canvas.drawRoundRect(RectF(0f, 0f, totalW, barHeight), cornerRadius, cornerRadius, bgPaint)
+        // 背景条
+        canvas.drawRoundRect(RectF(0f, 0f, w, barHeight), cornerRadius, cornerRadius, bgPaint)
 
         if (chapters.size <= 1) return
 
@@ -81,12 +76,11 @@ class ChapterOverlayView @JvmOverloads constructor(
 
         for (i in 0 until chapters.size) {
             val chap = chapters[i]
-            // 内容区域的坐标（受 padding 约束）
-            val segStart = drawL + chap.startFraction * drawW
+            val segStart = chap.startFraction * w
             val segEnd = if (i + 1 < chapters.size) {
-                drawL + chapters[i + 1].startFraction * drawW
+                chapters[i + 1].startFraction * w
             } else {
-                drawR
+                w
             }
 
             // 分隔线（每个章节起点画一条，不含第一个）
@@ -125,16 +119,13 @@ class ChapterOverlayView @JvmOverloads constructor(
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
-        if (chapters.isEmpty()) return false
-        val drawL = paddingLeft.toFloat()
-        val drawW = (width - paddingLeft - paddingRight).toFloat()
-        if (drawW <= 0) return false
+        if (chapters.isEmpty() || width == 0) return false
 
         when (event.action) {
             MotionEvent.ACTION_UP -> {
-                val fraction = ((event.x - drawL) / drawW).coerceIn(0f, 1f)
+                val fraction = (event.x / width).coerceIn(0f, 1f)
                 // 找点击位置对应的章节分段
-                var idx = chapters.indices.firstOrNull { i ->
+                val idx = chapters.indices.firstOrNull { i ->
                     chapters[i].startFraction > fraction
                 }?.minus(1) ?: (chapters.size - 1)
                 if (idx in chapters.indices) {
