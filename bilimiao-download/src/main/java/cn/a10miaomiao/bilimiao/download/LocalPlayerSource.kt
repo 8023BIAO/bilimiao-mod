@@ -1,6 +1,7 @@
 package cn.a10miaomiao.bilimiao.download
 
 import android.app.Activity
+import android.content.Context
 import android.net.Uri
 import cn.a10miaomiao.bilimiao.download.entry.BiliDownloadEntryInfo
 import cn.a10miaomiao.bilimiao.download.entry.BiliDownloadMediaFileInfo
@@ -10,6 +11,7 @@ import com.a10miaomiao.bilimiao.comm.delegate.player.entity.PlayerSourceIds
 import com.a10miaomiao.bilimiao.comm.delegate.player.entity.PlayerSourceInfo
 import com.a10miaomiao.bilimiao.comm.delegate.player.entity.SubtitleSourceInfo
 import com.a10miaomiao.bilimiao.comm.miao.MiaoJson
+import com.a10miaomiao.bilimiao.comm.network.ApiHelper
 import com.a10miaomiao.bilimiao.comm.network.MiaoHttp
 import master.flame.danmaku.danmaku.loader.android.DanmakuLoaderFactory
 import master.flame.danmaku.danmaku.parser.BaseDanmakuParser
@@ -33,16 +35,28 @@ class LocalPlayerSource(
 
     private val entry = getEntryFileInfo()
 
+    private val avid: Long? get() = entry.avid
+
+    /** 从本地读取上次播放进度 */
+    private fun readSavedProgress(): Long {
+        val avid = avid ?: return 0L
+        return activity.getPreferences(Context.MODE_PRIVATE)
+            .getLong("dl_${avid}_${id}", 0L)
+    }
+
     override suspend fun getPlayerUrl(quality: Int, fnval: Int): PlayerSourceInfo {
         val duration = entry.total_time_milli
         val acceptList = listOf(
             PlayerSourceInfo.AcceptInfo(0, "本地")
         )
+        val savedProgress = readSavedProgress()
         val emptyPlayerSourceInfo = PlayerSourceInfo().also {
             it.url = ""
             it.quality = -1
             it.acceptList = acceptList
             it.duration = duration
+            it.lastPlayCid = id
+            it.lastPlayTime = savedProgress
         }
 
         val videoDirPath = entryDirPath + "/" + entry.type_tag
@@ -67,6 +81,8 @@ class LocalPlayerSource(
                     it.quality = 0
                     it.acceptList = acceptList
                     it.duration = duration
+                    it.lastPlayCid = id
+                    it.lastPlayTime = savedProgress
                 }
             } else {
                 return emptyPlayerSourceInfo
@@ -86,6 +102,8 @@ class LocalPlayerSource(
                     it.quality = 0
                     it.acceptList = acceptList
                     it.duration = duration
+                    it.lastPlayCid = id
+                    it.lastPlayTime = savedProgress
                 }
             } else {
                 return PlayerSourceInfo().also {
@@ -95,6 +113,8 @@ class LocalPlayerSource(
                     it.quality = 0
                     it.acceptList = acceptList
                     it.duration = duration
+                    it.lastPlayCid = id
+                    it.lastPlayTime = savedProgress
                 }
             }
         }
@@ -105,8 +125,31 @@ class LocalPlayerSource(
             cid = id,
             sid = entry.season_id ?: "",
             epid = entry.ep?.episode_id?.toString() ?: "",
-            aid = entry.avid?.toString() ?: "",
+            aid = avid?.toString() ?: "",
         )
+    }
+
+    override suspend fun historyReport(progress: Long) {
+        val avid = avid ?: return
+
+        // 方案A：本地缓存（断网兜底）
+        activity.getPreferences(Context.MODE_PRIVATE)
+            .edit().putLong("dl_${avid}_${id}", progress).apply()
+
+        // 方案C：上报B站（联网时静默同步）
+        try {
+            MiaoHttp.request {
+                url = "https://api.bilibili.com/x/v2/history/report"
+                formBody = ApiHelper.createParams(
+                    "aid" to avid.toString(),
+                    "cid" to id,
+                    "progress" to progress.toString(),
+                    "realtime" to progress.toString(),
+                    "type" to "3"
+                )
+                method = MiaoHttp.POST
+            }.awaitCall()
+        } catch (_: Exception) { }
     }
 
     override suspend fun getDanmakuParser(): BaseDanmakuParser? {
