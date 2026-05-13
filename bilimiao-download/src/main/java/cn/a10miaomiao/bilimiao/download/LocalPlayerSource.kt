@@ -12,6 +12,7 @@ import com.a10miaomiao.bilimiao.comm.delegate.player.entity.PlayerSourceInfo
 import com.a10miaomiao.bilimiao.comm.delegate.player.entity.SubtitleSourceInfo
 import com.a10miaomiao.bilimiao.comm.miao.MiaoJson
 import com.a10miaomiao.bilimiao.comm.network.ApiHelper
+import com.a10miaomiao.bilimiao.comm.network.BiliApiService
 import com.a10miaomiao.bilimiao.comm.network.MiaoHttp
 import master.flame.danmaku.danmaku.loader.android.DanmakuLoaderFactory
 import master.flame.danmaku.danmaku.parser.BaseDanmakuParser
@@ -37,11 +38,24 @@ class LocalPlayerSource(
 
     private val avid: Long? get() = entry.avid
 
-    /** 从本地读取上次播放进度 */
+    /** 从本地读取上次播放进度（存的是秒，转毫秒返回） */
     private fun readSavedProgress(): Long {
         val avid = avid ?: return 0L
         return activity.getPreferences(Context.MODE_PRIVATE)
-            .getLong("dl_${avid}_${id}", 0L)
+            .getLong("dl_${avid}_${id}", 0L) * 1000L
+    }
+
+    /** 从B站云同步播放进度（playurl API，返回毫秒） */
+    private suspend fun fetchCloudProgress(): Long {
+        val avid = avid ?: return 0L
+        return try {
+            val res = BiliApiService.playerAPI.getVideoPalyUrl(
+                avid.toString(), id, 64, 4048
+            )
+            res.last_play_time ?: 0L
+        } catch (_: Exception) {
+            0L // 断网或未登录，静默忽略
+        }
     }
 
     override suspend fun getPlayerUrl(quality: Int, fnval: Int): PlayerSourceInfo {
@@ -49,7 +63,11 @@ class LocalPlayerSource(
         val acceptList = listOf(
             PlayerSourceInfo.AcceptInfo(0, "本地")
         )
-        val savedProgress = readSavedProgress()
+        var savedProgress = readSavedProgress()
+        // 本地无进度时尝试从B站云同步（用户在线看过的话）
+        if (savedProgress <= 0L) {
+            savedProgress = fetchCloudProgress()
+        }
         val emptyPlayerSourceInfo = PlayerSourceInfo().also {
             it.url = ""
             it.quality = -1

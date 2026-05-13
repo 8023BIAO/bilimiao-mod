@@ -922,9 +922,16 @@ class PlayerController(
             try {
                 val aid = playerStore.state.aid
                 val cid = playerStore.state.cid
-                if (aid.isBlank() || cid.isBlank()) return@launch
+                // 下载视频时 playerStore 可能没有 aid/cid，从 playerSource 取
+                val finalAid = aid.ifBlank {
+                    delegate.playerSource?.getSourceIds()?.aid ?: return@launch
+                }
+                val finalCid = cid.ifBlank {
+                    delegate.playerSource?.getSourceIds()?.cid ?: return@launch
+                }
+                if (finalAid.isBlank() || finalCid.isBlank()) return@launch
 
-                val res = BiliApiService.playerAPI.getPlayerV2Info(aid, cid)
+                val res = BiliApiService.playerAPI.getPlayerV2Info(finalAid, finalCid)
                     .apply {
                         headers["Referer"] = "https://www.bilibili.com/video/av$aid"
                         headers["User-Agent"] = "Mozilla/5.0"

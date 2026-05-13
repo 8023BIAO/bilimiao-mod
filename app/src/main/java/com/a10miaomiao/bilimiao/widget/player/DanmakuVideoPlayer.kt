@@ -137,9 +137,8 @@ class DanmakuVideoPlayer : StandardGSYVideoPlayer {
                 RelativeLayout.LayoutParams.MATCH_PARENT,
                 RelativeLayout.LayoutParams.WRAP_CONTENT
             ).apply {
-                // 固定在父布局底部，始终可见（不依赖 layout_bottom 的 visibility）
-                addRule(RelativeLayout.ALIGN_PARENT_BOTTOM)
-                bottomMargin = context.resources.getDimensionPixelSize(R.dimen.chapter_bar_above_progress)
+                // 始终在底部控制栏上方（参考 PiliPlus ViewPointSegmentProgressBar）
+                addRule(RelativeLayout.ABOVE, R.id.layout_bottom)
             }
         }
     }
@@ -391,42 +390,6 @@ class DanmakuVideoPlayer : StandardGSYVideoPlayer {
 
     }
 
-
-    //    private val chapterOverlayView: ChapterOverlayView by lazy {
-    //        ChapterOverlayView(context).apply {
-    //            layoutParams = RelativeLayout.LayoutParams(
-    //                RelativeLayout.LayoutParams.MATCH_PARENT,
-    //                RelativeLayout.LayoutParams.WRAP_CONTENT
-    //            ).apply {
-    //                // 固定在父布局底部，始终可见（不依赖 layout_bottom 的 visibility）
-    //                addRule(RelativeLayout.ALIGN_PARENT_BOTTOM)
-    //                bottomMargin = context.resources.getDimensionPixelSize(R.dimen.chapter_bar_above_progress)
-    //            }
-    //        }
-    //    }
-    //
-    //    /** 设置视频章节（显示在进度条上方） */
-    //    fun setChapters(chapters: List<ChapterInfo>, onChapterClick: ((Long) -> Unit)? = null) {
-    //        if (chapters.size <= 1) {
-    //            if (chapterOverlayView.parent != null) {
-    //                chapterOverlayView.visibility = View.GONE
-    //            }
-    //            return
-    //        }
-    //        chapterOverlayView.chapters = chapters
-    //        chapterOverlayView.onChapterClick = onChapterClick
-    //        if (chapterOverlayView.parent == null) {
-    //            mRootLayout.addView(chapterOverlayView)
-    //        }
-    //        chapterOverlayView.visibility = View.VISIBLE
-    //    }
-    //
-    //    /** 隐藏章节标记 */
-    //    fun hideChapters() {
-    //        if (chapterOverlayView.parent != null) {
-    //            chapterOverlayView.visibility = View.GONE
-    //        }
-    //    }
 
     private fun updateMode() {
         when (mode) {
