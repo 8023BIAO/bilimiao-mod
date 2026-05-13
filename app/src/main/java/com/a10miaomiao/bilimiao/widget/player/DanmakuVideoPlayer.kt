@@ -137,8 +137,9 @@ class DanmakuVideoPlayer : StandardGSYVideoPlayer {
                 RelativeLayout.LayoutParams.MATCH_PARENT,
                 RelativeLayout.LayoutParams.WRAP_CONTENT
             ).apply {
-                // 在进度条正上方
-                addRule(RelativeLayout.ABOVE, R.id.progress)
+                // 固定在底部上方的安全位置（超过底部控制栏高度）
+                addRule(RelativeLayout.ALIGN_PARENT_BOTTOM)
+                bottomMargin = (80f * context.resources.displayMetrics.density).toInt()
             }
         }
     }
@@ -157,6 +158,19 @@ class DanmakuVideoPlayer : StandardGSYVideoPlayer {
             mRootLayout.addView(chapterOverlayView)
         }
         chapterOverlayView.visibility = View.VISIBLE
+        // 与SeekBar位置对齐，确保章节刻度1:1
+        chapterOverlayView.post {
+            val progressBar = findViewById<View>(R.id.progress) ?: return@post
+            val loc = IntArray(2)
+            progressBar.getLocationInWindow(loc)
+            val selfLoc = IntArray(2)
+            chapterOverlayView.getLocationInWindow(selfLoc)
+            val leftPad = loc[0] - selfLoc[0]
+            val rightPad = (selfLoc[0] + chapterOverlayView.width) - (loc[0] + progressBar.width)
+            if (leftPad >= 0 && rightPad >= 0) {
+                chapterOverlayView.setPadding(leftPad, 0, rightPad, 0)
+            }
+        }
     }
 
     /** 隐藏章节标记 */

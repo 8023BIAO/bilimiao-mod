@@ -915,6 +915,8 @@ class PlayerController(
 
     private fun fetchChapters() {
         chapterFetchJob?.cancel()
+        // 先隐藏旧章节，防止切换视频后残留
+        player?.hideChapters()
         chapterFetchJob = scope.launch(Dispatchers.IO) {
             try {
                 val aid = playerStore.state.aid
