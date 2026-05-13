@@ -933,7 +933,7 @@ class PlayerController(
 
                 val res = BiliApiService.playerAPI.getPlayerV2Info(finalAid, finalCid)
                     .apply {
-                        headers["Referer"] = "https://www.bilibili.com/video/av$aid"
+                        headers["Referer"] = "https://www.bilibili.com/video/av$finalAid"
                         headers["User-Agent"] = "Mozilla/5.0"
                     }
                     .awaitCall().json<ResponseData<PlayerV2Info>>()
