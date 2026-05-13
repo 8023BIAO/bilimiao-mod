@@ -125,7 +125,8 @@ internal class DownloadListPageViewModel(
             var type = DownloadType.VIDEO
             val page = biliEntry.page_data
             if (page != null) {
-                id = biliEntry.avid!!
+                // 合集下载用season_id分组，否则用avid
+                id = biliEntry.season_id?.toLongOrNull() ?: biliEntry.avid!!
                 indexTitle = page.download_title ?: "unknown"
                 cid = page.cid
                 type = DownloadType.VIDEO

@@ -13,6 +13,8 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
@@ -23,6 +25,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
@@ -32,6 +36,7 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -42,12 +47,15 @@ import androidx.core.graphics.toColorInt
 import androidx.lifecycle.viewModelScope
 import bilibili.app.archive.v1.Arc
 import bilibili.app.archive.v1.Page
+import bilibili.app.view.v1.ViewGRPC
+import bilibili.app.view.v1.ViewReq
 import cn.a10miaomiao.bilimiao.compose.components.dialogs.AutoSheetDialog
 import cn.a10miaomiao.bilimiao.compose.pages.download.DownloadBangumiCreatePageViewModel.QualityInfo
 import cn.a10miaomiao.bilimiao.compose.pages.download.EpisodeItem
 import cn.a10miaomiao.bilimiao.download.DownloadService
 import cn.a10miaomiao.bilimiao.download.entry.BiliDownloadEntryInfo
 import com.a10miaomiao.bilimiao.comm.network.BiliApiService
+import com.a10miaomiao.bilimiao.comm.network.BiliGRPCHttp
 import com.a10miaomiao.bilimiao.comm.utils.NumberUtil
 import com.kongzue.dialogx.dialogs.PopTip
 import kotlinx.coroutines.CoroutineScope
@@ -72,18 +80,40 @@ class VideoDownloadDialogState(
     private val _loading = mutableStateOf(false)
     val loading: Boolean get() = _loading.value
 
+    // ===== 分P数据 =====
     private val _list = mutableStateOf(listOf<Page>())
     val list: List<Page> get() = _list.value
 
     private val _arcData = MutableStateFlow<Arc?>(null)
     val arcData get() = _arcData.value
 
-    private val _checkedMap = mutableStateMapOf<Long,Int>() // 已选中
+    private val _checkedMap = mutableStateMapOf<Long,Int>() // cid -> index
     val checkedMap: Map<Long,Int> get() = _checkedMap
     val checkedSize: Int get() = _checkedMap.size
 
     private val _downloadedSet = mutableStateOf(setOf<Long>()) // 已下载
     val downloadedSet: Set<Long> get() = _downloadedSet.value
+
+    // ===== 合集数据 =====
+    data class SeasonEpisodeItem(
+        val aid: Long,
+        val title: String,
+        val cover: String = "",
+        val duration: String = "",
+    )
+
+    private val _seasonEpisodes = mutableStateOf(listOf<SeasonEpisodeItem>())
+    val seasonEpisodes: List<SeasonEpisodeItem> get() = _seasonEpisodes.value
+
+    private val _seasonCheckedMap = mutableStateMapOf<Long, Boolean>() // aid -> checked
+    val seasonCheckedMap: Map<Long, Boolean> get() = _seasonCheckedMap
+    val seasonCheckedSize: Int get() = _seasonCheckedMap.count { it.value }
+
+    private val _tabIndex = mutableStateOf(0)
+    val tabIndex: Int get() = _tabIndex.value
+
+    private var _seasonId: String? = null
+    private var _seasonTitle: String? = null
 
     private val _qualityList = mutableStateOf(listOf<Pair<Int, String>>()) // Quality: Description
     val qualityList: List<Pair<Int, String>> get() = _qualityList.value
@@ -97,9 +127,12 @@ class VideoDownloadDialogState(
     fun show(
         service: DownloadService,
         bvid: String,
-        videoArc: Arc,
+        videoArc: Arc? = null,
         videoPages: List<Page>,
         context: Context,
+        ugcSeasonEpisodes: List<SeasonEpisodeItem>? = null,
+        seasonId: String? = null,
+        seasonTitle: String? = null,
     ) {
         downloadService = service
         _visible.value = true
@@ -110,10 +143,23 @@ class VideoDownloadDialogState(
             videoPages.map { it.cid }.toSet()
         )
         videoBvid = bvid
-        if (qualityList.isEmpty() && videoPages.isNotEmpty()) {
+        _tabIndex.value = 0
+        _seasonId = seasonId
+        _seasonTitle = seasonTitle
+        if (ugcSeasonEpisodes != null) {
+            _seasonEpisodes.value = ugcSeasonEpisodes
+            _seasonCheckedMap.clear()
+        } else {
+            _seasonEpisodes.value = emptyList()
+        }
+        if (qualityList.isEmpty() && videoPages.isNotEmpty() && videoArc != null) {
             val videoAid = videoArc.aid.toString()
             getAcceptQuality(videoAid, videoPages[0].cid.toString(), context)
         }
+    }
+
+    fun setTabIndex(index: Int) {
+        _tabIndex.value = index
     }
 
     private fun getDownloadedList(
@@ -196,6 +242,24 @@ class VideoDownloadDialogState(
     val allSelectable: Boolean get() = list.any { !downloadedSet.contains(it.cid) }
     val allSelected: Boolean get() = list.isNotEmpty() && list.all { downloadedSet.contains(it.cid) || checkedMap.containsKey(it.cid) }
 
+    // ===== 合集选择 =====
+    fun seasonCheckedChange(aid: Long) {
+        val current = _seasonCheckedMap[aid] ?: false
+        _seasonCheckedMap[aid] = !current
+    }
+
+    fun seasonSelectAll() {
+        _seasonEpisodes.value.forEach { _seasonCheckedMap[it.aid] = true }
+    }
+
+    fun seasonDeselectAll() {
+        _seasonCheckedMap.clear()
+    }
+
+    val seasonAllSelectable: Boolean get() = _seasonEpisodes.value.isNotEmpty()
+    val seasonAllSelected: Boolean get() = _seasonEpisodes.value.isNotEmpty()
+            && _seasonEpisodes.value.all { _seasonCheckedMap[it.aid] == true }
+
     fun setQuality(quality: Int) {
         _quality.intValue = quality
     }
@@ -217,28 +281,87 @@ class VideoDownloadDialogState(
             return
         }
         val videoArc = arcData
-        if (videoArc == null) {
-            showSnackbar("缺少视频信息")
-            return
-        }
-        // 按 page 排序，确保分片顺序
-        val ordered = checkedMap.entries.sortedBy { list.getOrNull(it.value)?.page ?: Int.MAX_VALUE }
-        ordered.forEach { c ->
-            var page = list.getOrNull(c.value)
-            if (page?.cid != c.key) {
-                page = list.find { it.cid == c.key }
+        if (_tabIndex.value == 0) {
+            if (videoArc == null) {
+                showSnackbar("缺少视频信息")
+                return
             }
-            if (page != null) {
-                downloadVideo(
-                    service,
-                    videoArc,
-                    page,
-                )
+            // 分P下载
+            val ordered = checkedMap.entries.sortedBy { list.getOrNull(it.value)?.page ?: Int.MAX_VALUE }
+            ordered.forEach { c ->
+                var page = list.getOrNull(c.value)
+                if (page?.cid != c.key) {
+                    page = list.find { it.cid == c.key }
+                }
+                if (page != null) {
+                    downloadVideo(service, videoArc, page)
+                }
+            }
+            PopTip.show("成功创建${checkedSize}条记录")
+        } else {
+            // 合集下载：逐个视频获取pages并下载
+            val checkedAids = _seasonCheckedMap.filter { it.value }.keys.toList()
+            if (checkedAids.isEmpty()) {
+                showSnackbar("请选择要下载的视频")
+                return
+            }
+            scope.launch(Dispatchers.IO) {
+                var successCount = 0
+                for (aid in checkedAids) {
+                    try {
+                        val episode = _seasonEpisodes.value.find { it.aid == aid } ?: continue
+                        val req = ViewReq(aid = aid)
+                        val res = BiliGRPCHttp.request { ViewGRPC.view(req) }.awaitCall()
+                        val arc = res.arc ?: continue
+                        val pages = res.pages.mapNotNull { it.page }
+                        val currentTime = System.currentTimeMillis()
+                        val entryTitle = _seasonTitle ?: episode.title
+                        for (page in pages) {
+                            val pageData = BiliDownloadEntryInfo.PageInfo(
+                                cid = page.cid,
+                                page = page.page,
+                                from = page.from,
+                                part = page.part,
+                                vid = page.vid,
+                                has_alias = false,
+                                tid = 0,
+                                width = 0,
+                                height = 0,
+                                rotate = 0,
+                                download_title = "视频已缓存完成",
+                                download_subtitle = entryTitle
+                            )
+                            val biliVideoEntry = BiliDownloadEntryInfo(
+                                media_type = 2, has_dash_audio = true,
+                                is_completed = false, total_bytes = 0, downloaded_bytes = 0,
+                                title = entryTitle,
+                                type_tag = quality.toString(),
+                                cover = episode.cover,
+                                prefered_video_quality = quality,
+                                quality_pithy_description = description,
+                                guessed_total_bytes = 0, total_time_milli = 0,
+                                danmaku_count = 1000,
+                                time_update_stamp = currentTime, time_create_stamp = currentTime,
+                                can_play_in_advance = true, interrupt_transform_temp_file = false,
+                                avid = aid, spid = 0,
+                                season_id = _seasonId, ep = null, source = null,
+                                bvid = "", owner_id = 0L, page_data = pageData,
+                            )
+                            service.createDownload(biliVideoEntry)
+                            successCount++
+                        }
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+                }
+                withContext(Dispatchers.Main) {
+                    PopTip.show("成功创建${successCount}条记录")
+                }
             }
         }
-        PopTip.show("成功创建${checkedSize}条记录")
         dismiss()
         _checkedMap.clear()
+        _seasonCheckedMap.clear()
     }
 
     private fun downloadVideo(
@@ -353,6 +476,53 @@ private fun VideoDownloadItem(
 }
 
 @Composable
+private fun SeasonDownloadItem(
+    item: VideoDownloadDialogState.SeasonEpisodeItem,
+    checked: Boolean,
+    onCheckedChange: ((Boolean) -> Unit)?,
+) {
+    Box(
+        modifier = Modifier.padding(
+            vertical = 5.dp,
+            horizontal = 10.dp,
+        )
+    ) {
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(10.dp),
+            color = Color.Transparent
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 10.dp, vertical = 5.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(
+                    modifier = Modifier.weight(1f),
+                ) {
+                    Text(
+                        text = item.title,
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 2,
+                    )
+                    Text(
+                        text = item.duration,
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.outline,
+                    )
+                }
+                Checkbox(
+                    checked = checked,
+                    onCheckedChange = { onCheckedChange?.invoke(!checked) }
+                )
+            }
+        }
+    }
+}
+
+@Composable
 fun VideoDownloadDialog(
     state: VideoDownloadDialogState,
 ) {
@@ -360,6 +530,11 @@ fun VideoDownloadDialog(
         var expandedQualityMenu by remember {
             mutableStateOf(false)
         }
+        val hasSeason = state.seasonEpisodes.isNotEmpty()
+        val tabs = if (hasSeason) listOf("分P", "合集") else listOf("分P")
+        val pagerState = rememberPagerState(pageCount = { tabs.size })
+        val coroutineScope = rememberCoroutineScope()
+
         AutoSheetDialog(
             modifier = Modifier
                 .background(MaterialTheme.colorScheme.surface)
@@ -368,6 +543,30 @@ fun VideoDownloadDialog(
                 Column(
                     modifier = Modifier.fillMaxSize()
                 ) {
+                    // Tab栏
+                    if (hasSeason) {
+                        TabRow(
+                            modifier = Modifier.fillMaxWidth(),
+                            selectedTabIndex = pagerState.currentPage,
+                        ) {
+                            tabs.forEachIndexed { index, title ->
+                                Tab(
+                                    selected = pagerState.currentPage == index,
+                                    onClick = {
+                                        state.setTabIndex(index)
+                                        coroutineScope.launch {
+                                            pagerState.animateScrollToPage(index)
+                                        }
+                                    },
+                                    text = {
+                                        Text(title)
+                                    }
+                                )
+                            }
+                        }
+                    }
+
+                    // 标题+全选
                     Row(
                         modifier = Modifier
                             .padding(10.dp)
@@ -375,12 +574,12 @@ fun VideoDownloadDialog(
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Text(
-                            text = "请选择分P下载",
+                            text = "请选择${tabs[pagerState.currentPage]}下载",
                             style = MaterialTheme.typography.titleMedium,
                             color = MaterialTheme.colorScheme.onSurface,
                             modifier = Modifier.weight(1f),
                         )
-                        if (state.allSelectable) {
+                        if (pagerState.currentPage == 0 && state.allSelectable) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Checkbox(
                                     checked = state.allSelected,
@@ -396,28 +595,81 @@ fun VideoDownloadDialog(
                                 )
                             }
                         }
+                        if (pagerState.currentPage == 1 && state.seasonAllSelectable) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Checkbox(
+                                    checked = state.seasonAllSelected,
+                                    onCheckedChange = {
+                                        if (state.seasonAllSelected) state.seasonDeselectAll()
+                                        else state.seasonSelectAll()
+                                    },
+                                )
+                                Text(
+                                    text = "全选",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                        }
                     }
+
+                    // 列表
                     Box(
                         modifier = Modifier.weight(1f)
                     ) {
-                        LazyColumn(
-                            modifier = Modifier
-                                .fillMaxSize()
-                        ) {
-                            items(state.list.size, { it }) { index ->
-                                val item = state.list[index]
-                                val isEnabled = !state.downloadedSet.contains(item.cid)
-                                val isChecked = if (isEnabled) {
-                                    state.checkedMap.containsKey(item.cid)
-                                } else {
-                                    true
+                        if (hasSeason) {
+                            HorizontalPager(
+                                modifier = Modifier.fillMaxSize(),
+                                state = pagerState,
+                            ) { pageIndex ->
+                                when (pageIndex) {
+                                    0 -> {
+                                        LazyColumn(modifier = Modifier.fillMaxSize()) {
+                                            items(state.list.size, { it }) { index ->
+                                                val item = state.list[index]
+                                                val isEnabled = !state.downloadedSet.contains(item.cid)
+                                                val isChecked = if (isEnabled) {
+                                                    state.checkedMap.containsKey(item.cid)
+                                                } else { true }
+                                                VideoDownloadItem(
+                                                    page = item,
+                                                    enabled = isEnabled,
+                                                    checked = isChecked,
+                                                    onCheckedChange = { state.checkedChange(item.cid, index) }
+                                                )
+                                            }
+                                        }
+                                    }
+                                    1 -> {
+                                        LazyColumn(modifier = Modifier.fillMaxSize()) {
+                                            items(state.seasonEpisodes.size, { it }) { index ->
+                                                val item = state.seasonEpisodes[index]
+                                                val isChecked = state.seasonCheckedMap[item.aid] ?: false
+                                                SeasonDownloadItem(
+                                                    item = item,
+                                                    checked = isChecked,
+                                                    onCheckedChange = { state.seasonCheckedChange(item.aid) }
+                                                )
+                                            }
+                                        }
+                                    }
                                 }
-                                VideoDownloadItem(
-                                    page = item,
-                                    enabled = isEnabled,
-                                    checked = isChecked,
-                                    onCheckedChange = { state.checkedChange(item.cid, index) }
-                                )
+                            }
+                        } else {
+                            LazyColumn(modifier = Modifier.fillMaxSize()) {
+                                items(state.list.size, { it }) { index ->
+                                    val item = state.list[index]
+                                    val isEnabled = !state.downloadedSet.contains(item.cid)
+                                    val isChecked = if (isEnabled) {
+                                        state.checkedMap.containsKey(item.cid)
+                                    } else { true }
+                                    VideoDownloadItem(
+                                        page = item,
+                                        enabled = isEnabled,
+                                        checked = isChecked,
+                                        onCheckedChange = { state.checkedChange(item.cid, index) }
+                                    )
+                                }
                             }
                         }
                         SnackbarHost(
@@ -426,8 +678,7 @@ fun VideoDownloadDialog(
                         )
                     }
                     Row(
-                        modifier = Modifier
-                            .padding(5.dp)
+                        modifier = Modifier.padding(5.dp)
                     ) {
                         Box() {
                             Button(
@@ -453,12 +704,14 @@ fun VideoDownloadDialog(
                                 }
                             }
                         }
+                        val totalCount = if (pagerState.currentPage == 0) state.checkedSize
+                            else state.seasonCheckedSize
                         Button(
                             modifier = Modifier.weight(1f),
                             onClick = state::startDownload,
-                            enabled = state.checkedMap.isNotEmpty(),
+                            enabled = totalCount > 0,
                         ) {
-                            Text(text = "开始下载(${state.checkedSize})")
+                            Text(text = "开始下载($totalCount)")
                         }
                     }
                 }

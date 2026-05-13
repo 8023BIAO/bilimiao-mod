@@ -583,6 +583,17 @@ class VideoDetailViewModel(
         val videoDetail = detailData.value ?: return
         val videoArc = videoDetail.getArcData() ?: return
         val viewPages = videoDetail.getPages()
+        val ugcSeason = videoDetail.getUgcSeasonData()
+        val ugcSeasonEpisodes = ugcSeason?.sections?.flatMap { section ->
+            section.episodes.filterNotNull().map { ep ->
+                VideoDownloadDialogState.SeasonEpisodeItem(
+                    aid = ep.aid,
+                    title = ep.title,
+                    cover = ep.cover,
+                    duration = ep.coverRightText,
+                )
+            }
+        }
         viewModelScope.launch {
             val downloadService = DownloadService.getService(activity)
             downloadDialogState.show(
@@ -591,6 +602,7 @@ class VideoDetailViewModel(
                 videoArc,
                 viewPages,
                 activity,
+                ugcSeasonEpisodes = ugcSeasonEpisodes,
             )
         }
     }
@@ -619,6 +631,17 @@ class VideoDetailViewModel(
         val videoDetail = detailData.value ?: return
         val videoArc = videoDetail.getArcData() ?: return
         val viewPages = videoDetail.getPages()
+        val ugcSeason = videoDetail.getUgcSeasonData()
+        val ugcSeasonEpisodes = ugcSeason?.sections?.flatMap { section ->
+            section.episodes.filterNotNull().map { ep ->
+                VideoDownloadDialogState.SeasonEpisodeItem(
+                    aid = ep.aid,
+                    title = ep.title,
+                    cover = ep.cover,
+                    duration = ep.coverRightText,
+                )
+            }
+        }
         when (item.key) {
             MenuKeys.download -> {
                 viewModelScope.launch {
@@ -629,6 +652,7 @@ class VideoDetailViewModel(
                         videoArc,
                         viewPages,
                         activity,
+                        ugcSeasonEpisodes = ugcSeasonEpisodes,
                     )
                 }
             }

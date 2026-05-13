@@ -56,6 +56,9 @@ import cn.a10miaomiao.bilimiao.compose.pages.user.UserFavouriteDetailPage
 import cn.a10miaomiao.bilimiao.compose.pages.user.components.FavouriteEditForm
 import cn.a10miaomiao.bilimiao.compose.pages.user.components.FavouriteEditFormState
 import cn.a10miaomiao.bilimiao.compose.pages.user.components.TitleBar
+import cn.a10miaomiao.bilimiao.compose.pages.video.components.VideoDownloadDialog
+import cn.a10miaomiao.bilimiao.compose.pages.video.components.VideoDownloadDialogState
+import cn.a10miaomiao.bilimiao.download.DownloadService
 import com.a10miaomiao.bilimiao.comm.delegate.player.BasePlayerDelegate
 import com.a10miaomiao.bilimiao.comm.delegate.player.VideoPlayerSource
 import com.a10miaomiao.bilimiao.comm.entity.MessageInfo
@@ -84,18 +87,23 @@ import org.kodein.di.DIAware
 import org.kodein.di.compose.rememberInstance
 import org.kodein.di.instance
 
-private class UserFavouriteDetailViewModel(
+class UserFavouriteDetailViewModel(
     override val di: DI,
     private val mediaId: String,
     private val mediaTitle: String,
     private val keyword: String = "",
 ) : ViewModel(), DIAware {
 
+    private val activity by instance<android.app.Activity>()
     private val pageNavigation: PageNavigation by instance()
     val userStore: UserStore by instance()
     private val playerDelegate: BasePlayerDelegate by instance()
     private val playerStore by instance<PlayerStore>()
     private val playListStore by instance<PlayListStore>()
+
+    val downloadDialogState = VideoDownloadDialogState(
+        scope = viewModelScope,
+    )
 
     var mediaInfo = MutableStateFlow<MediaListInfo?>(null)
     val isRefreshing = MutableStateFlow(false)
@@ -280,6 +288,32 @@ private class UserFavouriteDetailViewModel(
         }
     }
 
+    fun openDownloadDialog() {
+        val items = list.data.value
+        if (items.isEmpty()) {
+            PopTip.show("没有可下载的视频")
+            return
+        }
+        viewModelScope.launch {
+            val service = DownloadService.getService(activity)
+            val seasonEpisodes = items.map { item ->
+                VideoDownloadDialogState.SeasonEpisodeItem(
+                    aid = item.id.toLongOrNull() ?: 0L,
+                    title = item.title,
+                    cover = item.cover,
+                    duration = NumberUtil.converDuration(item.duration),
+                )
+            }
+            downloadDialogState.show(
+                service = service,
+                bvid = "",
+                videoPages = emptyList(),
+                context = activity,
+                ugcSeasonEpisodes = seasonEpisodes,
+            )
+        }
+    }
+
     fun searchSelfPage(text: String) {
         pageNavigation.navigate(UserFavouriteDetailPage(
             id = mediaId,
@@ -460,6 +494,15 @@ internal fun UserFavouriteDetailContent(
                 )
             },
             action = {
+                TextButton(
+                    onClick = { viewModel.openDownloadDialog() },
+                ) {
+                    Text(
+                        text = "下载",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                }
                 Text(
                     text = "自动连播",
                     style = MaterialTheme.typography.labelMedium,
