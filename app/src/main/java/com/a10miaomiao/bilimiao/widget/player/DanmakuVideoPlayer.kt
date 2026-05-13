@@ -137,8 +137,8 @@ class DanmakuVideoPlayer : StandardGSYVideoPlayer {
                 RelativeLayout.LayoutParams.MATCH_PARENT,
                 RelativeLayout.LayoutParams.WRAP_CONTENT
             ).apply {
-                // 始终在底部控制栏上方（参考 PiliPlus ViewPointSegmentProgressBar）
-                addRule(RelativeLayout.ABOVE, R.id.layout_bottom)
+                // 在进度条正上方
+                addRule(RelativeLayout.ABOVE, R.id.progress)
             }
         }
     }

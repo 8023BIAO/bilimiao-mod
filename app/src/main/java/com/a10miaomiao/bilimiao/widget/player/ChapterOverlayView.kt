@@ -43,6 +43,8 @@ class ChapterOverlayView @JvmOverloads constructor(
     init {
         bgPaint.color = 0x73000000  // 半透明黑底
         dividerPaint.color = 0xFF333333.toInt()
+        // 确保能接收到触摸事件
+        isClickable = true
     }
 
     override fun onDraw(canvas: Canvas) {
@@ -100,24 +102,28 @@ class ChapterOverlayView @JvmOverloads constructor(
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
-        if (event.action == MotionEvent.ACTION_UP && chapters.isNotEmpty()) {
-            val fraction = event.x / width
-            // 找点击位置之后的第一个章节（二分查找）
-            var lo = 0
-            var hi = chapters.size
-            while (lo < hi) {
-                val mid = (lo + hi) / 2
-                if (chapters[mid].startFraction <= fraction) {
-                    lo = mid + 1
-                } else {
-                    hi = mid
+        if (chapters.isEmpty()) return false
+        when (event.action) {
+            MotionEvent.ACTION_UP -> {
+                val fraction = event.x / width
+                // 找点击位置之后的第一个章节（二分查找）
+                var lo = 0
+                var hi = chapters.size
+                while (lo < hi) {
+                    val mid = (lo + hi) / 2
+                    if (chapters[mid].startFraction <= fraction) {
+                        lo = mid + 1
+                    } else {
+                        hi = mid
+                    }
                 }
+                if (lo < chapters.size) {
+                    onChapterClick?.invoke(chapters[lo].startMs)
+                }
+                return true
             }
-            if (lo < chapters.size) {
-                onChapterClick?.invoke(chapters[lo].startMs)
-            }
-            return true
+            MotionEvent.ACTION_DOWN -> return true // 消费DOWN事件，确保能收到UP
+            else -> return true
         }
-        return false
     }
 }

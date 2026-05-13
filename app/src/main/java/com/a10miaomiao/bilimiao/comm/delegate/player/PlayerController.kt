@@ -33,9 +33,6 @@ import com.a10miaomiao.bilimiao.comm.store.PlayListStore
 import com.a10miaomiao.bilimiao.comm.store.PlayerStore
 import com.a10miaomiao.bilimiao.comm.store.UserStore
 import com.a10miaomiao.bilimiao.comm.network.BiliApiService
-import com.a10miaomiao.bilimiao.comm.network.MiaoHttp.Companion.json
-import com.a10miaomiao.bilimiao.comm.entity.ResponseData
-import com.a10miaomiao.bilimiao.comm.entity.player.PlayerV2Info
 import com.a10miaomiao.bilimiao.service.PlaybackService
 import com.a10miaomiao.bilimiao.widget.player.ChapterInfo
 import android.widget.Toast
@@ -931,32 +928,42 @@ class PlayerController(
                 }
                 if (finalAid.isBlank() || finalCid.isBlank()) return@launch
 
-                val res = BiliApiService.playerAPI.getPlayerV2Info(finalAid, finalCid)
+                val response = BiliApiService.playerAPI.getPlayerV2Info(finalAid, finalCid)
                     .apply {
                         headers["Referer"] = "https://www.bilibili.com/video/av$finalAid"
                         headers["User-Agent"] = "Mozilla/5.0"
                     }
-                    .awaitCall().json<ResponseData<PlayerV2Info>>()
-                if (!res.isSuccess) return@launch
+                    .awaitCall()
+                val jsonStr = response.body!!.string()
+                val root = org.json.JSONObject(jsonStr)
+                if (root.optInt("code", -1) != 0) return@launch
 
-                val viewPoints: List<PlayerV2Info.ViewPoint> = res.requireData().view_points ?: return@launch
-                // 只取 type=2（章节类型）
-                val chapterPoints = viewPoints.filter { it.type == 2 }
+                val data = root.optJSONObject("data") ?: return@launch
+                val viewPointsArr = data.optJSONArray("view_points") ?: return@launch
+
+                // 解析 view_points，只取 type=2（章节类型）
+                val chapterPoints = mutableListOf<org.json.JSONObject>()
+                for (i in 0 until viewPointsArr.length()) {
+                    val vp = viewPointsArr.getJSONObject(i)
+                    if (vp.optInt("type", 0) == 2) {
+                        chapterPoints.add(vp)
+                    }
+                }
                 if (chapterPoints.size <= 1) return@launch
 
                 val duration = playerSourceInfo?.duration ?: return@launch
                 val durationSec = duration / 1000f
                 if (durationSec <= 0) return@launch
 
-                val chapters = chapterPoints.map { point: PlayerV2Info.ViewPoint ->
-                    val startSec = point.from.toFloat()
-                    val endSec = (point.`to`.takeIf { it > 0 } ?: point.from + 1).toFloat()
+                val chapters = chapterPoints.map { vp ->
+                    val from = vp.optInt("from", 0)
+                    val to = vp.optInt("to", 0)
                     ChapterInfo(
-                        title = point.content,
-                        startFraction = (startSec / durationSec).coerceIn(0f, 1f),
-                        endFraction = (endSec / durationSec).coerceIn(0f, 1f),
-                        startMs = point.from * 1000L,
-                        endMs = point.`to` * 1000L
+                        title = vp.optString("content", null),
+                        startFraction = (from.toFloat() / durationSec).coerceIn(0f, 1f),
+                        endFraction = ((if (to > 0) to else from + 1).toFloat() / durationSec).coerceIn(0f, 1f),
+                        startMs = from * 1000L,
+                        endMs = to * 1000L
                     )
                 }
 

@@ -49,7 +49,7 @@ android {
             manifestPlaceholders["channel"] = "Development"
         }
         release {
-            isMinifyEnabled = true
+            isMinifyEnabled = false
             isShrinkResources = false
             // 跳过 lintVital，节省大量时间
             lint { checkReleaseBuilds = false }
