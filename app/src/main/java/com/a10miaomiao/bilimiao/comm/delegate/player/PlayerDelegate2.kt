@@ -427,8 +427,16 @@ class PlayerDelegate2(
             return
         }
         lastReportProgress = currentPosition
+        val progressSec = currentPosition / 1000
         activity.lifecycleScope.launch(Dispatchers.IO) {
-            playerSource?.historyReport(currentPosition / 1000)
+            playerSource?.historyReport(progressSec)
+            // 同步写入本地缓存，方便本地下载视频续播读取
+            val source = playerSource ?: return@launch
+            val ids = source.getSourceIds()
+            if (ids.aid.isNotBlank() && ids.cid.isNotBlank()) {
+                activity.getPreferences(android.content.Context.MODE_PRIVATE)
+                    .edit().putLong("dl_${ids.aid}_${ids.cid}", progressSec).apply()
+            }
         }
     }
 

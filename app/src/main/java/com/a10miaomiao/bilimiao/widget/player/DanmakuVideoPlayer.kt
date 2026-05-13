@@ -131,56 +131,57 @@ class DanmakuVideoPlayer : StandardGSYVideoPlayer {
     // 倍速文字值
     private val mPlaySpeedValue: TextView by lazy { findViewById(R.id.play_speed_value) }
 
-    private val chapterOverlayView: ChapterOverlayView by lazy {
-        ChapterOverlayView(context).apply {
-            layoutParams = RelativeLayout.LayoutParams(
-                RelativeLayout.LayoutParams.MATCH_PARENT,
-                RelativeLayout.LayoutParams.WRAP_CONTENT
-            ).apply {
-                // 固定在底部，后续通过 post 回调精确移动到 SeekBar 上方
-                addRule(RelativeLayout.ALIGN_PARENT_BOTTOM)
-            }
-        }
-    }
+    // ===== 章节按钮（替代进度条覆盖层） =====
+    private val mChapterBtnLayout: ViewGroup by lazy { findViewById(R.id.chapter_btn_layout) }
+    private val mChapterBtnText: TextView by lazy { findViewById(R.id.chapter_btn_text) }
 
-    /** 设置视频章节（显示在进度条上方） */
+    private var mChapters: List<ChapterInfo> = emptyList()
+    private var mChapterSeekAction: ((Long) -> Unit)? = null
+
+    /** 设置章节数据（有章节显示按钮，没有则隐藏） */
     fun setChapters(chapters: List<ChapterInfo>, onChapterClick: ((Long) -> Unit)? = null) {
+        mChapters = chapters
+        mChapterSeekAction = onChapterClick
         if (chapters.size <= 1) {
-            if (chapterOverlayView.parent != null) {
-                chapterOverlayView.visibility = View.GONE
-            }
-            return
-        }
-        chapterOverlayView.chapters = chapters
-        chapterOverlayView.onChapterClick = onChapterClick
-        if (chapterOverlayView.parent == null) {
-            mRootLayout.addView(chapterOverlayView)
-        }
-        chapterOverlayView.visibility = View.VISIBLE
-        // 精确对齐 SeekBar：获取 SeekBar 的实际像素位置来设置章节条的 margin 和高度偏移
-        chapterOverlayView.post {
-            val seekBar = findViewById<View>(R.id.progress) ?: return@post
-            val overlayRect = android.graphics.Rect()
-            val seekRect = android.graphics.Rect()
-            chapterOverlayView.getGlobalVisibleRect(overlayRect)
-            seekBar.getGlobalVisibleRect(seekRect)
-
-            val lp = chapterOverlayView.layoutParams as RelativeLayout.LayoutParams
-            // X轴对齐：左右margin = SeekBar相对本视图的偏移
-            lp.leftMargin = (seekRect.left - overlayRect.left).coerceAtLeast(0)
-            lp.rightMargin = (overlayRect.right - seekRect.right).coerceAtLeast(0)
-            // Y轴对齐：上移使底边贴着 SeekBar 顶边
-            val offsetY = overlayRect.bottom - seekRect.top
-            chapterOverlayView.translationY = -offsetY.toFloat()
-            chapterOverlayView.requestLayout()
+            mChapterBtnLayout.visibility = View.GONE
+        } else {
+            mChapterBtnText.text = "章节"
+            mChapterBtnLayout.visibility = View.VISIBLE
         }
     }
 
-    /** 隐藏章节标记 */
+    /** 隐藏章节按钮 */
     fun hideChapters() {
-        if (chapterOverlayView.parent != null) {
-            chapterOverlayView.visibility = View.GONE
+        mChapterBtnLayout.visibility = View.GONE
+        mChapters = emptyList()
+    }
+
+    /** 打开章节选择弹窗 */
+    private fun showChapterPopup() {
+        if (mChapters.size <= 1) return
+
+        val menus = mChapters.mapIndexed { index, chap ->
+            val label = if (chap.title.isNullOrEmpty()) {
+                "第${index + 1}章"
+            } else {
+                chap.title
+            }
+            CheckPopupMenu.MenuItemInfo(label, chap.startMs)
         }
+        val pm = CheckPopupMenu(
+            context = context,
+            anchor = mChapterBtnLayout,
+            menus = menus,
+            value = -1L, // 不选中任何项
+            themeColor = mThemeColor,
+        )
+        pm.onMenuItemClick = { item ->
+            val startMs = item.value
+            if (startMs > 0L) {
+                mChapterSeekAction?.invoke(startMs)
+            }
+        }
+        pm.show()
     }
 
     init {
@@ -380,6 +381,9 @@ class DanmakuVideoPlayer : StandardGSYVideoPlayer {
                 currentSubtitleSource = it.value
             }
             pm.show()
+        }
+        mChapterBtnLayout.setOnClickListener {
+            showChapterPopup()
         }
         mBottomSubtitleTV.setTextColor(Color.parseColor("#FFFFFF"))
         mBottomSubtitleTV.backgroundColor = Color.parseColor("#66000000")
@@ -730,10 +734,9 @@ class DanmakuVideoPlayer : StandardGSYVideoPlayer {
         } else {
             super.setViewShowState(view, visibility)
             if (view.id == mBottomLayout.id) {
-                // 章节标记跟随控件显示/隐藏
-                if (chapterOverlayView.parent != null) {
-                    chapterOverlayView.visibility = visibility
-                }
+                // 章节按钮跟随控件显示/隐藏
+                val chapVisibility = if (mChapters.size > 1) visibility else View.GONE
+                mChapterBtnLayout.visibility = chapVisibility
                 mBottomSubtitleTV.translationY =
                     if (visibility == VISIBLE) 0f else dip(40).toFloat()
                 when (mode) {
