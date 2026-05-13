@@ -534,6 +534,7 @@ class DanmakuVideoPlayer : StandardGSYVideoPlayer {
             mChangePosition=false
             return
         }
+        if (activityContext == null) return
         var curHeight = 0
         if (activityContext != null) {
             curHeight =
