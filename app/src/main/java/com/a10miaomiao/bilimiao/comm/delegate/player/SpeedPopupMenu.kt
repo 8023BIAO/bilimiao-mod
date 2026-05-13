@@ -4,7 +4,6 @@ import android.app.Activity
 import android.view.Menu
 import android.view.View
 import androidx.appcompat.widget.PopupMenu
-import com.a10miaomiao.bilimiao.comm.popupContext
 import com.a10miaomiao.bilimiao.comm.utils.setCheckMarkTint
 
 class SpeedPopupMenu(
@@ -15,7 +14,7 @@ class SpeedPopupMenu(
     private val themeColor: Int,
 ) {
     private var speedListener: ((Float) -> Unit)? = null
-    private var popupMenu = PopupMenu(activity.popupContext(), anchor)
+    private var popupMenu = PopupMenu(activity, anchor)
     private var currentValue = value
 
     init {

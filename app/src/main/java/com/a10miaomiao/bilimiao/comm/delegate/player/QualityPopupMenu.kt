@@ -6,7 +6,6 @@ import android.view.View
 import androidx.appcompat.widget.PopupMenu
 import com.a10miaomiao.bilimiao.R
 import com.a10miaomiao.bilimiao.comm.delegate.player.entity.PlayerSourceInfo
-import com.a10miaomiao.bilimiao.comm.popupContext
 import com.a10miaomiao.bilimiao.comm.store.UserStore
 import com.a10miaomiao.bilimiao.comm.utils.setCheckMarkTint
 
@@ -19,7 +18,7 @@ class QualityPopupMenu(
     private val themeColor: Int,
 ) {
     private var qualityListener: ((Int) -> Unit)? = null
-    private var popupMenu = PopupMenu(activity.popupContext(), anchor)
+    private var popupMenu = PopupMenu(activity, anchor)
     val MAX_QUALITY_NOT_LOGIN = 48 // 48[480P 清晰]
     val MAX_QUALITY_NOT_VIP = 80 // 80[1080P 高清]
     private var currentValue = value

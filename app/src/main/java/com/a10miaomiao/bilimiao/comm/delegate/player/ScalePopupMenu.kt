@@ -4,7 +4,6 @@ import android.app.Activity
 import android.view.Menu
 import android.view.View
 import androidx.appcompat.widget.PopupMenu
-import com.a10miaomiao.bilimiao.comm.popupContext
 import com.a10miaomiao.bilimiao.comm.utils.setCheckMarkTint
 import com.shuyu.gsyvideoplayer.utils.GSYVideoType
 
@@ -15,7 +14,7 @@ class ScalePopupMenu(
     private val themeColor: Int,
 ) {
     private var scaleListener: ((Int) -> Unit)? = null
-    private var popupMenu = PopupMenu(activity.popupContext(), anchor)
+    private var popupMenu = PopupMenu(activity, anchor)
     private var currentValue = value
 
     private val scaleList = listOf(
