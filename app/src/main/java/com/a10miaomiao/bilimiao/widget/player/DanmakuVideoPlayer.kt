@@ -132,8 +132,6 @@ class DanmakuVideoPlayer : StandardGSYVideoPlayer {
     private val mPlaySpeedValue: TextView by lazy { findViewById(R.id.play_speed_value) }
 
     init {
-        // 永久隐藏长按加速遮罩 — GSY会反复设VISIBLE, 在此初始化为0尺寸
-        post { mPlaySpeed.visibility = GONE }
     }
 
     // 锁定按钮
@@ -411,7 +409,7 @@ class DanmakuVideoPlayer : StandardGSYVideoPlayer {
             }
             PlayerMode.FULL -> {
                 mFullModeBottomContainer.visibility = VISIBLE
-                mPlaySpeedName.visibility = GONE
+                mPlaySpeedName.visibility = VISIBLE
                 mMiniSendDanmakuIV.visibility = GONE
                 mSendDanmakuTV.visibility = VISIBLE
                 mBackButton.setImageResource(R.drawable.ic_arrow_back_white_24dp)
@@ -480,9 +478,8 @@ class DanmakuVideoPlayer : StandardGSYVideoPlayer {
         isSpeedPlaying = true
         lastSpeed = speed
         speed *= 2
-        mSpeedTips.visibility = View.VISIBLE
+        // speed_tips 已由用户设置为隐藏，不再显示"倍速播放中"提示
         mTouchingProgressBar = false
-        (mSpeedTipsIV.drawable as? AnimationDrawable)?.start()
         // 震动反馈
         performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
     }
@@ -491,10 +488,8 @@ class DanmakuVideoPlayer : StandardGSYVideoPlayer {
      * 停止长按倍数播放
      */
     private fun stopLongClickSpeedPlay() {
-        mSpeedTips.visibility = View.GONE
         isSpeedPlaying = false
         speed = lastSpeed
-        (mSpeedTipsIV.drawable as? AnimationDrawable)?.stop()
     }
 
     override fun onTouch(v: View?, event: MotionEvent?): Boolean {
@@ -1223,10 +1218,7 @@ class DanmakuVideoPlayer : StandardGSYVideoPlayer {
 
     override fun setSpeed(speed: Float, soundTouch: Boolean) {
         super.setSpeed(speed, soundTouch)
-        mPlaySpeed.visibility = GONE
-        mPlaySpeedValue.text = ""
-        mPlaySpeedName.text = ""
-        post { mPlaySpeed.visibility = GONE }
+        mPlaySpeedValue.text = "x$speed"
     }
 
 
