@@ -131,6 +131,42 @@ class DanmakuVideoPlayer : StandardGSYVideoPlayer {
     // 倍速文字值
     private val mPlaySpeedValue: TextView by lazy { findViewById(R.id.play_speed_value) }
 
+    private val chapterOverlayView: ChapterOverlayView by lazy {
+        ChapterOverlayView(context).apply {
+            layoutParams = RelativeLayout.LayoutParams(
+                RelativeLayout.LayoutParams.MATCH_PARENT,
+                RelativeLayout.LayoutParams.WRAP_CONTENT
+            ).apply {
+                // 固定在父布局底部，始终可见（不依赖 layout_bottom 的 visibility）
+                addRule(RelativeLayout.ALIGN_PARENT_BOTTOM)
+                bottomMargin = context.resources.getDimensionPixelSize(R.dimen.chapter_bar_above_progress)
+            }
+        }
+    }
+
+    /** 设置视频章节（显示在进度条上方） */
+    fun setChapters(chapters: List<ChapterInfo>, onChapterClick: ((Long) -> Unit)? = null) {
+        if (chapters.size <= 1) {
+            if (chapterOverlayView.parent != null) {
+                chapterOverlayView.visibility = View.GONE
+            }
+            return
+        }
+        chapterOverlayView.chapters = chapters
+        chapterOverlayView.onChapterClick = onChapterClick
+        if (chapterOverlayView.parent == null) {
+            mRootLayout.addView(chapterOverlayView)
+        }
+        chapterOverlayView.visibility = View.VISIBLE
+    }
+
+    /** 隐藏章节标记 */
+    fun hideChapters() {
+        if (chapterOverlayView.parent != null) {
+            chapterOverlayView.visibility = View.GONE
+        }
+    }
+
     init {
     }
 
@@ -714,6 +750,10 @@ class DanmakuVideoPlayer : StandardGSYVideoPlayer {
         } else {
             super.setViewShowState(view, visibility)
             if (view.id == mBottomLayout.id) {
+                // 章节标记跟随控件显示/隐藏
+                if (chapterOverlayView.parent != null) {
+                    chapterOverlayView.visibility = visibility
+                }
                 mBottomSubtitleTV.translationY =
                     if (visibility == VISIBLE) 0f else dip(40).toFloat()
                 when (mode) {

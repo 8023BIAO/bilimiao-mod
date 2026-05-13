@@ -953,14 +953,14 @@ class PlayerController(
                     )
                 }
 
-//                withContext(Dispatchers.Main) {
-//                    player?.setChapters(chapters) { startMs ->
-//                        player?.seekTo(startMs)
-//                    }
-//                }
+                withContext(Dispatchers.Main) {
+                    player?.setChapters(chapters) { startMs ->
+                        player?.seekTo(startMs)
+                    }
+                }
             } catch (e: Exception) {
                 miaoLogger().e("ChapterSegments", "获取章节异常", e)
-//                withContext(Dispatchers.Main) { player?.hideChapters() }
+                withContext(Dispatchers.Main) { player?.hideChapters() }
             }
         }
     }
