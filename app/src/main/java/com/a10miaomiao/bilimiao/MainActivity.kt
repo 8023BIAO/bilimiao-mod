@@ -697,9 +697,8 @@ class MainActivity
             config.blockBackgroundColor
         }
         bgColor = (bgColor and 0x00FFFFFF) or (0xF8000000).toInt()
-        val fgColor = if (isDark) 0x71FFFFFF.toInt() else 0x71000000
         ui.mAppBar.post {
-            ui.mAppBar.updateTheme(themeColor, bgColor, fgColor)
+            ui.mAppBar.updateTheme(themeColor, bgColor, config.foregroundAlpha45Color)
         }
         themeDelegate.setThemeColor(themeColor)
     }
