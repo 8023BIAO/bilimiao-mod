@@ -41,6 +41,10 @@ class ErrorLogPage : ComposePage() {
     @Composable
     override fun Content() {
         PageConfig(title = "错误日志")
+        Surface(
+            modifier = Modifier.fillMaxSize(),
+            color = MaterialTheme.colorScheme.surface,
+        ) {
         val windowStore: WindowStore by rememberInstance()
         val windowState = windowStore.stateFlow.collectAsState().value
         val windowInsets = windowState.getContentInsets(localContainerView())
@@ -339,5 +343,6 @@ class ErrorLogPage : ComposePage() {
                 }
             }
         }
+        } // Surface
     }
 }
