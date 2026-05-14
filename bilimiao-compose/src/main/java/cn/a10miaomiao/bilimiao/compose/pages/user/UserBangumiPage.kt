@@ -48,7 +48,7 @@ import com.a10miaomiao.bilimiao.comm.network.MiaoHttp.Companion.json
 import com.a10miaomiao.bilimiao.comm.store.UserStore
 import com.a10miaomiao.bilimiao.comm.utils.NumberUtil
 import com.a10miaomiao.bilimiao.store.WindowStore
-import com.kongzue.dialogx.dialogs.PopTip
+import com.a10miaomiao.bilimiao.comm.toast
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
@@ -115,7 +115,7 @@ private class UserBangumiPageViewModel(
                 }
                 list.finished.value = list.data.value.size >= res.requireData().count
             } else {
-                PopTip.show(res.message)
+                toast(res.message)
                 throw Exception(res.message)
             }
         } catch (e: Exception) {

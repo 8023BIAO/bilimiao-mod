@@ -552,12 +552,18 @@ class DownloadService: Service(), CoroutineScope, DownloadManager.Callback {
         var dirName = ""
         var pageDirName = ""
         val ep = biliEntry.ep
-        if (ep != null) {
-            dirName = "s_" + biliEntry.season_id!!
-            pageDirName = ep.episode_id.toString()
-        }
         val page = biliEntry.page_data
-        if (page != null) {
+        // 优先用 season_id 作为父目录名（合集/番剧共用目录，确保分组正确）
+        if (biliEntry.season_id != null) {
+            dirName = "s_" + biliEntry.season_id!!
+            pageDirName = if (ep != null) {
+                ep.episode_id.toString()
+            } else if (page != null) {
+                "c_" + page.cid
+            } else {
+                ""
+            }
+        } else if (page != null) {
             dirName = biliEntry.avid!!.toString()
             pageDirName = "c_" + page.cid
         }

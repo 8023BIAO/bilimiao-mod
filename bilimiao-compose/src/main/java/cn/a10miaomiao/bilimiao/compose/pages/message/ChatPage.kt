@@ -59,7 +59,7 @@ import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.integration.compose.placeholder
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.bumptech.glide.request.RequestOptions
-import com.kongzue.dialogx.dialogs.PopTip
+import com.a10miaomiao.bilimiao.comm.toast
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
@@ -231,7 +231,7 @@ private class ChatViewModel(
             val csrf = BilimiaoCommApp.commApp.loginInfo?.cookie_info?.cookies
                 ?.find { it.name == "bili_jct" }?.value
             if (csrf == null) {
-                launch(Dispatchers.Main) { PopTip.show("未登录，无法发送") }
+                launch(Dispatchers.Main) { toast("未登录，无法发送") }
                 isSending.value = false
                 return@launch
             }
@@ -276,7 +276,7 @@ private class ChatViewModel(
                 cur.removeAll { it.msg_key == fakeMsgKey }
                 list.data.value = cur
                 loadMsgs()  // 从API刷新，获取真实msg_key
-                launch(Dispatchers.Main) { PopTip.show("发送成功") }
+                launch(Dispatchers.Main) { toast("发送成功") }
                 // 通知私信列表刷新
                 MessageRefreshEvent.trigger()
             } else {
@@ -285,12 +285,12 @@ private class ChatViewModel(
                     val cur = list.data.value.toMutableList()
                     cur.removeAll { it.msg_key == fakeMsgKey }
                     list.data.value = cur
-                    PopTip.show(res.message.ifBlank { "发送失败" })
+                    toast(res.message.ifBlank { "发送失败" })
                 }
             }
         } catch (e: Exception) {
             e.printStackTrace()
-            launch(Dispatchers.Main) { PopTip.show("发送失败: ${e.message}") }
+            launch(Dispatchers.Main) { toast("发送失败: ${e.message}") }
         } finally {
             isSending.value = false
         }
@@ -386,7 +386,7 @@ private fun ChatPageContent(
                     // 系统提示数组→Toast
                     if (parsed.toastText.isNotBlank()) {
                         LaunchedEffect(msg.msg_key) {
-                            PopTip.show(parsed.toastText)
+                            toast(parsed.toastText)
                         }
                     }
                     // 有文本内容才渲染气泡

@@ -29,7 +29,7 @@ import com.a10miaomiao.bilimiao.comm.network.MiaoHttp.Companion.json
 import com.a10miaomiao.bilimiao.comm.store.FilterStore
 import com.a10miaomiao.bilimiao.comm.store.UserStore
 import com.a10miaomiao.bilimiao.comm.utils.BiliUrlMatcher
-import com.kongzue.dialogx.dialogs.PopTip
+import com.a10miaomiao.bilimiao.comm.toast
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -105,11 +105,11 @@ class UserSpaceViewModel(
                 _isFollow.value = result.card.relation.is_follow == 1
             } else {
                 _fail.value = res.message
-                PopTip.show(res.message)
+                toast(res.message)
             }
         } catch (e: Exception) {
             _fail.value = e
-            PopTip.show("网络错误")
+            toast("网络错误")
             e.printStackTrace()
         } finally {
             _loading.value = false
@@ -124,7 +124,7 @@ class UserSpaceViewModel(
     fun filterUpperAdd () {
         val info = detailData.value
         if (info == null) {
-            PopTip.show("请等待信息加载完成")
+            toast("请等待信息加载完成")
         } else {
             filterStore.addUpper(
                 info.card.mid.toLong(),
@@ -140,7 +140,7 @@ class UserSpaceViewModel(
 
     fun attention() = viewModelScope.launch(Dispatchers.IO) {
         if (!userStore.isLogin()) {
-            PopTip.show("请先登录")
+            toast("请先登录")
             return@launch
         }
         try {
@@ -151,16 +151,16 @@ class UserSpaceViewModel(
                 .awaitCall().json<MessageInfo>()
             if (res.code == 0) {
                 _isFollow.value = mode == 1
-                PopTip.show(if (mode == 1) {
+                toast(if (mode == 1) {
                     "关注成功"
                 } else {
                     "已取消关注"
                 })
             } else {
-                PopTip.show(res.message)
+                toast(res.message)
             }
         } catch (e: Exception) {
-            PopTip.show("网络错误")
+            toast("网络错误")
             e.printStackTrace()
         }
     }
@@ -240,7 +240,7 @@ class UserSpaceViewModel(
                 val text = getUserSpaceUrl()
                 val clip = ClipData.newPlainText(label, text)
                 clipboard.setPrimaryClip(clip)
-                PopTip.show("已复制：$text")
+                toast("已复制：$text")
             }
             // 分享（已禁用）
 //            5 -> {

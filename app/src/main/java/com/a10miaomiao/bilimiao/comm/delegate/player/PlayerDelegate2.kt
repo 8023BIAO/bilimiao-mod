@@ -72,6 +72,7 @@ import com.a10miaomiao.bilimiao.widget.player.media3.ExoMediaSourceInterceptList
 import com.a10miaomiao.bilimiao.widget.player.media3.ExoSourceManager
 import com.a10miaomiao.bilimiao.widget.scaffold.getScaffoldView
 import com.google.common.util.concurrent.MoreExecutors
+import com.a10miaomiao.bilimiao.comm.toast
 import com.kongzue.dialogx.dialogs.PopTip
 import com.shuyu.gsyvideoplayer.utils.GSYVideoType
 import com.shuyu.gsyvideoplayer.video.base.GSYVideoPlayer
@@ -277,7 +278,7 @@ class PlayerDelegate2(
         if (scaffoldApp.showPlayer) {
             val now = System.currentTimeMillis()
             if (now - lastBackPressedTime > 2000) {
-                PopTip.show("再按一次退出播放")
+                PopTip.show("再按一次退出播放").showLong()
                 lastBackPressedTime = now
             } else {
                 closePlayer()

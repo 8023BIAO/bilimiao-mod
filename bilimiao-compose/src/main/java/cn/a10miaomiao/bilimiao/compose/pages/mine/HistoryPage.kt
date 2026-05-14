@@ -97,7 +97,7 @@ import com.a10miaomiao.bilimiao.comm.store.UserStore
 import com.a10miaomiao.bilimiao.comm.utils.NumberUtil
 import com.a10miaomiao.bilimiao.comm.utils.miaoLogger
 import com.a10miaomiao.bilimiao.store.WindowStore
-import com.kongzue.dialogx.dialogs.PopTip
+import com.a10miaomiao.bilimiao.comm.toast
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -304,11 +304,11 @@ private class HistoryPageViewModel(
                 HistoryGRPC.delete(req)
             }.awaitCall()
             list.data.value = newItems
-            PopTip.show("已删除选中的${deleteItems.size}个记录")
+            toast("已删除选中的${deleteItems.size}个记录")
             clearSelectedItemMap()
         } catch (e: Exception) {
             e.printStackTrace()
-            PopTip.show("删除失败:$e")
+            toast("删除失败:$e")
         } finally {
             messageDialog.close()
         }
@@ -326,7 +326,7 @@ private class HistoryPageViewModel(
             list.data.value = listOf()
         } catch (e: Exception) {
             e.printStackTrace()
-            PopTip.show("操作失败:$e")
+            toast("操作失败:$e")
         } finally {
             messageDialog.close()
         }
@@ -359,7 +359,7 @@ private class HistoryPageViewModel(
                 ))
             }
             else -> {
-                PopTip.show("未知类型:${item.business}")
+                toast("未知类型:${item.business}")
             }
         }
 
@@ -407,7 +407,7 @@ private fun HistoryPageContent(
             MenuKeys.delete -> {
                 val selectedKeys = viewModel.selectedItemMap.keys
                 if (selectedKeys.isEmpty()) {
-                    PopTip.show("未选中任何视频")
+                    toast("未选中任何视频")
                 } else {
                     viewModel.deleteHistory(selectedKeys)
                 }

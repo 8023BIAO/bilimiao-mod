@@ -135,7 +135,7 @@ import com.a10miaomiao.bilimiao.comm.utils.NumberUtil
 import com.a10miaomiao.bilimiao.store.WindowStore
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
-import com.kongzue.dialogx.dialogs.PopTip
+import com.a10miaomiao.bilimiao.comm.toast
 import kotlinx.coroutines.launch
 import org.kodein.di.compose.rememberInstance
 import cn.a10miaomiao.bilimiao.compose.common.navigation.PageNavigation

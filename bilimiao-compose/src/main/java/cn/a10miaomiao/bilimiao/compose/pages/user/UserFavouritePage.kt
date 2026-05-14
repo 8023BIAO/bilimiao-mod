@@ -51,7 +51,7 @@ import com.a10miaomiao.bilimiao.comm.mypage.MenuKeys
 import com.a10miaomiao.bilimiao.comm.mypage.myMenu
 import com.a10miaomiao.bilimiao.comm.store.UserStore
 import com.a10miaomiao.bilimiao.store.WindowStore
-import com.kongzue.dialogx.dialogs.PopTip
+import com.a10miaomiao.bilimiao.comm.toast
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
@@ -302,10 +302,10 @@ private fun UserFavouritePageContent(
                         privacy = formState.privacy,
                     )
                 }.onSuccess {
-                    PopTip.show("创建成功")
+                    toast("创建成功")
                     showAddDialog = false
                 }.onFailure {
-                    PopTip.show(it.message ?: it.toString())
+                    toast(it.message ?: it.toString())
                 }
             }
         }

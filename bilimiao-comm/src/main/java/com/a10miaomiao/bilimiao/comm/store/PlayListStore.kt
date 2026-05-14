@@ -21,6 +21,7 @@ import com.a10miaomiao.bilimiao.comm.network.BiliGRPCHttp
 import com.a10miaomiao.bilimiao.comm.network.MiaoHttp.Companion.json
 import com.a10miaomiao.bilimiao.comm.store.base.BaseStore
 import com.a10miaomiao.bilimiao.comm.utils.miaoLogger
+import com.a10miaomiao.bilimiao.comm.toast
 import com.kongzue.dialogx.dialogs.PopTip
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -275,7 +276,7 @@ class PlayListStore(override val di: DI) :
                         pageNum++
                     } else {
                         withContext(Dispatchers.Main) {
-                            PopTip.show(res.message)
+                            toast(res.message)
                         }
                         loadFinish = true
                     }
@@ -336,7 +337,7 @@ class PlayListStore(override val di: DI) :
                 )
             } catch (e: Exception) {
                 e.printStackTrace()
-                PopTip.show(e.toString())
+                toast(e.toString())
             }
         }
 
@@ -402,7 +403,7 @@ class PlayListStore(override val di: DI) :
                         items.addAll(newItems)
                         loadFinish = !res.requireData().has_more
                     } else {
-                        PopTip.show(res.message)
+                        toast(res.message)
                         loadFinish = true
                     }
                 } catch (e: Exception) {
@@ -481,7 +482,7 @@ class PlayListStore(override val di: DI) :
                     loadFinish = !data.has_more || listData.isEmpty() || data.next_key.isBlank()
                     startKey = data.next_key
                 } else {
-                    PopTip.show(res.message)
+                    toast(res.message)
                     loadFinish = true
                 }
             } catch (e: Exception) {

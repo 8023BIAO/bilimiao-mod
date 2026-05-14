@@ -43,7 +43,7 @@ import cn.a10miaomiao.bilimiao.download.entry.BiliDownloadEntryAndPathInfo
 import cn.a10miaomiao.bilimiao.download.entry.CurrentDownloadInfo
 import com.a10miaomiao.bilimiao.comm.mypage.myMenu
 import com.a10miaomiao.bilimiao.store.WindowStore
-import com.kongzue.dialogx.dialogs.PopTip
+import com.a10miaomiao.bilimiao.comm.toast
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
@@ -79,6 +79,11 @@ internal class DownloadListPageViewModel(
         loadDownloadList()
     }
 
+    fun refresh() = viewModelScope.launch {
+        val service = DownloadService.getService(fragment.requireContext())
+        _loadDownloadList(service)
+    }
+
     private fun loadDownloadList() = viewModelScope.launch {
         val service = DownloadService.getService(fragment.requireContext())
         downloadPath = service.getDownloadPath()
@@ -99,7 +104,7 @@ internal class DownloadListPageViewModel(
     private fun _loadDownloadList(
         service: DownloadService,
     ) {
-        downloadList.value = service.downloadList
+        downloadList.value = service.downloadList.toList()
     }
 
     fun filterDownloadList(
@@ -115,8 +120,9 @@ internal class DownloadListPageViewModel(
             } else {
                 true
             }
-        }.forEach {
-            val biliEntry = it.entry
+        }
+        .forEach { item ->
+            val biliEntry = item.entry
             var indexTitle = ""
             var itemTitle = ""
             var id = 0L
@@ -146,8 +152,8 @@ internal class DownloadListPageViewModel(
                     ep.index
                 }
             }
-            val item = DownloadItemInfo(
-                dir_path = it.entryDirPath,
+            val downloadItem = DownloadItemInfo(
+                dir_path = item.entryDirPath,
                 media_type = biliEntry.media_type,
                 has_dash_audio = biliEntry.has_dash_audio,
                 is_completed = biliEntry.is_completed,
@@ -162,19 +168,19 @@ internal class DownloadListPageViewModel(
                 page = biliEntry.page_data?.page ?: 0,
                 index_title = indexTitle,
             )
-            val last = result.lastOrNull()
-            if (last != null
-                && last.type == item.type
-                && last.id == item.id
-            ) {
-                if (last.is_completed && !item.is_completed) {
-                    last.is_completed = false
+            // 搜索整个result列表，找同类型+同id的分组合并
+            val existing = result.find {
+                it.type == downloadItem.type && it.id == downloadItem.id
+            }
+            if (existing != null) {
+                if (existing.is_completed && !downloadItem.is_completed) {
+                    existing.is_completed = false
                 }
-                last.items.add(item)
+                existing.items.add(downloadItem)
             } else {
                 result.add(
                     DownloadInfo(
-                        dir_path = it.pageDirPath,
+                        dir_path = item.pageDirPath,
                         media_type = biliEntry.media_type,
                         has_dash_audio = biliEntry.has_dash_audio,
                         is_completed = biliEntry.is_completed,
@@ -185,7 +191,7 @@ internal class DownloadListPageViewModel(
                         cid = cid,
                         id = id,
                         type = type,
-                        items = mutableListOf(item)
+                        items = mutableListOf(downloadItem)
                     )
                 )
             }
@@ -209,7 +215,7 @@ internal class DownloadListPageViewModel(
         clipboardManager.setPrimaryClip(ClipData.newPlainText("", downloadPath))
         // 安卓13(33)以上操作剪切板会自动提示，无需手动toast
         if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.S_V2){
-            PopTip.show("已复制路径到剪切板")
+            toast("已复制路径到剪切板")
         }
     }
 
@@ -220,7 +226,7 @@ internal class DownloadListPageViewModel(
                 try { service.deleteDownload(info.dir_path, item.dir_path) } catch (_: Exception) {}
             }
         }
-        PopTip.show("已删除${items.size}项")
+        toast("已删除${items.size}项")
         _loadDownloadList(service)
     }
 }
@@ -402,6 +408,7 @@ internal fun DownloadListPageContent(
             }
             LazyColumn(
             modifier = Modifier.fillMaxWidth()
+                .weight(1f)
                 .padding(start = windowInsets.leftDp.dp, end = windowInsets.rightDp.dp)
         ) {
             item { Spacer(modifier = Modifier.height(windowInsets.topDp.dp)) }

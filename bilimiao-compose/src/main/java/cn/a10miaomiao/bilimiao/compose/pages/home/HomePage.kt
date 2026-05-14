@@ -57,7 +57,7 @@ import com.a10miaomiao.bilimiao.comm.store.AppStore
 import com.a10miaomiao.bilimiao.comm.store.AppStore.HomeSettingState
 import com.a10miaomiao.bilimiao.comm.store.UserStore
 import com.a10miaomiao.bilimiao.store.WindowStore
-import com.kongzue.dialogx.dialogs.PopTip
+import com.a10miaomiao.bilimiao.comm.toast
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
@@ -191,7 +191,7 @@ private class HomePageViewModel(
         }
         val now = System.currentTimeMillis()
         if (now - lastBackPressedTime > 2000) {
-            PopTip.show("再按一次退出")
+            toast("再按一次退出")
             lastBackPressedTime = now
         } else {
             fragment.requireActivity().finish()

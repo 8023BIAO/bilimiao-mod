@@ -41,7 +41,7 @@ import com.a10miaomiao.bilimiao.comm.store.UserStore
 import com.a10miaomiao.bilimiao.comm.utils.MiaoLogger
 import com.a10miaomiao.bilimiao.comm.utils.miaoLogger
 import com.a10miaomiao.bilimiao.store.WindowStore
-import com.kongzue.dialogx.dialogs.PopTip
+import com.a10miaomiao.bilimiao.comm.toast
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -110,7 +110,7 @@ private class ReplyDetailListPageViewModel(
 
     fun likeReply() {
         if (!userStore.isLogin()) {
-            PopTip.show("请先登录")
+            toast("请先登录")
             return
         }
         val item = detailData.value ?: return
@@ -132,11 +132,11 @@ private class ReplyDetailListPageViewModel(
                     )
                     _detailData.value = newItem
                 } else {
-                    PopTip.show(res.message)
+                    toast(res.message)
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
-                PopTip.show("加载失败:" + e.message ?: e.toString())
+                toast("加载失败:" + e.message ?: e.toString())
             }
         }
     }

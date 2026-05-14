@@ -35,7 +35,7 @@ import com.a10miaomiao.bilimiao.comm.store.TimeSettingStore
 import com.a10miaomiao.bilimiao.comm.store.model.DateModel
 import com.a10miaomiao.bilimiao.comm.utils.NumberUtil
 import com.a10miaomiao.bilimiao.store.WindowStore
-import com.kongzue.dialogx.dialogs.PopTip
+import com.a10miaomiao.bilimiao.comm.toast
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -91,7 +91,7 @@ private class TimeRegionDetailListContentViewModel(
             if (res.code == 0) {
                 val data = res.data
                 if (data == null) {
-                    PopTip.show("获取不到列表数据")
+                    toast("获取不到列表数据")
                     list.fail.value = "加载失败"
                     return@launch
                 }
@@ -101,7 +101,7 @@ private class TimeRegionDetailListContentViewModel(
                     tryAgainTimes++
                     // 只重试5次
                     if (tryAgainTimes > 5) {
-                        PopTip.show("获取不到列表数据")
+                        toast("获取不到列表数据")
                         throw Exception(res.message)
                     }
                     delay(2000L)
@@ -129,7 +129,7 @@ private class TimeRegionDetailListContentViewModel(
                     tryAgainLoadData(pageNum + 1)
                 }
             } else {
-                PopTip.show(res.message)
+                toast(res.message)
                 throw Exception(res.message)
             }
         } catch (e: Exception) {

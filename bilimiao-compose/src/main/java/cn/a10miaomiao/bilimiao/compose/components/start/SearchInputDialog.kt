@@ -54,7 +54,7 @@ import cn.a10miaomiao.bilimiao.compose.pages.search.SearchInputViewModel.Suggest
 import cn.a10miaomiao.bilimiao.compose.pages.search.SearchInputViewModel.SuggestType
 import cn.a10miaomiao.bilimiao.compose.pages.search.SearchResultPage
 import com.a10miaomiao.bilimiao.comm.utils.miaoLogger
-import com.kongzue.dialogx.dialogs.PopTip
+import com.a10miaomiao.bilimiao.comm.toast
 import org.kodein.di.compose.rememberInstance
 
 @Composable
@@ -91,7 +91,7 @@ fun SearchInputDialog(
 
     fun startSearch(keyword: String) {
         if (keyword.isEmpty()) {
-            PopTip.show("请输入ID或关键字")
+            toast("请输入ID或关键字")
             return
         }
         viewModel.addSearchHistory(keyword)
@@ -246,7 +246,7 @@ fun SearchInputDialog(
             confirmButton = {
                 TextButton(onClick = {
                     viewModel.deleteSearchHistory(value)
-                    PopTip.show("已删除")
+                    toast("已删除")
                     pendingDelete = null
                 }) { Text("确定") }
             },
@@ -267,7 +267,7 @@ fun SearchInputDialog(
             confirmButton = {
                 TextButton(onClick = {
                     viewModel.deleteAllSearchHistory()
-                    PopTip.show("已清空了~")
+                    toast("已清空了~")
                     showClearAll = false
                 }) { Text("确定清空") }
             },

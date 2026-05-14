@@ -48,7 +48,7 @@ import com.a10miaomiao.bilimiao.comm.network.BiliApiService
 import com.a10miaomiao.bilimiao.comm.network.MiaoHttp.Companion.json
 import com.a10miaomiao.bilimiao.comm.store.UserStore
 import com.a10miaomiao.bilimiao.store.WindowStore
-import com.kongzue.dialogx.dialogs.PopTip
+import com.a10miaomiao.bilimiao.comm.toast
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
@@ -136,16 +136,16 @@ internal class SendDanmakuViewModel(
 
     fun sendDanmaku() {
         if (!userStore.isLogin()) {
-            PopTip.show("请先登录")
+            toast("请先登录")
             return
         }
         val text = danmakuText.value.replace("\n", " ")
         if (text.isBlank()) {
-            PopTip.show("请输入弹幕内容")
+            toast("请输入弹幕内容")
             return
         }
         if (text.length > 50) {
-            PopTip.show("弹幕内容字数过多")
+            toast("弹幕内容字数过多")
             return
         }
 
@@ -170,7 +170,7 @@ internal class SendDanmakuViewModel(
                 ).awaitCall().json<MessageInfo>()
                 withContext(Dispatchers.Main) {
                     if (res.isSuccess) {
-                        PopTip.show("发送成功")
+                        toast("发送成功")
                         playerDelegate.sendDanmaku(
                             type,
                             text,
@@ -180,13 +180,13 @@ internal class SendDanmakuViewModel(
                         )
                         pageNavigation.popBackStack()
                     } else {
-                        PopTip.show(res.message)
+                        toast(res.message)
                     }
                 }
                 loading.value = false
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
-                    PopTip.show(e.message ?: e.toString())
+                    toast(e.message ?: e.toString())
                 }
                 loading.value = false
             }

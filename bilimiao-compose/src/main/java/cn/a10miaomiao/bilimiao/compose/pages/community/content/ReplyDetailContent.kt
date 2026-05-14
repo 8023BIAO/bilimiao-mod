@@ -85,7 +85,7 @@ import com.a10miaomiao.bilimiao.comm.network.BiliGRPCHttp
 import com.a10miaomiao.bilimiao.comm.network.MiaoHttp.Companion.json
 import com.a10miaomiao.bilimiao.comm.store.UserStore
 import com.a10miaomiao.bilimiao.comm.utils.miaoLogger
-import com.kongzue.dialogx.dialogs.PopTip
+import com.a10miaomiao.bilimiao.comm.toast
 import com.kongzue.dialogx.dialogs.TipDialog
 import com.kongzue.dialogx.dialogs.WaitDialog
 import kotlinx.coroutines.Dispatchers
@@ -193,7 +193,7 @@ private class ReplyDetailContentViewModel(
 
     fun likeReplyAt(index: Int) = viewModelScope.launch(Dispatchers.IO) {
         if (!userStore.isLogin()) {
-            PopTip.show("请先登录")
+            toast("请先登录")
             return@launch
         }
         try {
@@ -216,11 +216,11 @@ private class ReplyDetailContentViewModel(
                 newList[index] = newItem
                 list.data.value = newList
             } else {
-                PopTip.show(res.message)
+                toast(res.message)
             }
         } catch (e: Exception) {
             e.printStackTrace()
-            PopTip.show("加载失败:" + e.message ?: e.toString())
+            toast("加载失败:" + e.message ?: e.toString())
         }
     }
 
@@ -262,7 +262,7 @@ private class ReplyDetailContentViewModel(
                 .json<MessageInfo>()
             if (res.isSuccess) {
                 withContext(Dispatchers.Main) {
-                    PopTip.show("删除成功")
+                    toast("删除成功")
                     messageDialog.close()
                     if (currentReply.id == reply.id) {
                         onDeletedReply(reply)

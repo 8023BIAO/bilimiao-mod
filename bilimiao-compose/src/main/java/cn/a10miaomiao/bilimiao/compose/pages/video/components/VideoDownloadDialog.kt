@@ -57,7 +57,7 @@ import cn.a10miaomiao.bilimiao.download.entry.BiliDownloadEntryInfo
 import com.a10miaomiao.bilimiao.comm.network.BiliApiService
 import com.a10miaomiao.bilimiao.comm.network.BiliGRPCHttp
 import com.a10miaomiao.bilimiao.comm.utils.NumberUtil
-import com.kongzue.dialogx.dialogs.PopTip
+import com.a10miaomiao.bilimiao.comm.toast
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -297,7 +297,7 @@ class VideoDownloadDialogState(
                     downloadVideo(service, videoArc, page)
                 }
             }
-            PopTip.show("成功创建${checkedSize}条记录")
+            toast("成功创建${checkedSize}条记录")
         } else {
             // 合集下载：逐个视频获取pages并下载
             val checkedAids = _seasonCheckedMap.filter { it.value }.keys.toList()
@@ -355,7 +355,7 @@ class VideoDownloadDialogState(
                     }
                 }
                 withContext(Dispatchers.Main) {
-                    PopTip.show("成功创建${successCount}条记录")
+                    toast("成功创建${successCount}条记录")
                 }
             }
         }

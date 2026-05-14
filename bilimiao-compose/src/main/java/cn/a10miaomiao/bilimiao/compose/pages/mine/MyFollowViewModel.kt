@@ -17,7 +17,7 @@ import com.a10miaomiao.bilimiao.comm.entity.ResponseData
 import com.a10miaomiao.bilimiao.comm.network.BiliApiService
 import com.a10miaomiao.bilimiao.comm.network.MiaoHttp.Companion.json
 import com.a10miaomiao.bilimiao.comm.store.UserStore
-import com.kongzue.dialogx.dialogs.PopTip
+import com.a10miaomiao.bilimiao.comm.toast
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -85,16 +85,16 @@ internal class MyFollowViewModel(
                 .awaitCall()
                 .json<MessageInfo>()
             if (res.isSuccess) {
-                PopTip.show("创建成功")
+                toast("创建成功")
                 clearTagEditDialogState()
                 loadData()
                 return true
             } else {
-                PopTip.show(res.message)
+                toast(res.message)
                 return false
             }
         } catch (e: Exception) {
-            PopTip.show("网络请求失败")
+            toast("网络请求失败")
             return false
         }
     }
@@ -109,16 +109,16 @@ internal class MyFollowViewModel(
                 .awaitCall()
                 .json<MessageInfo>()
             if (res.isSuccess) {
-                PopTip.show("修改成功")
+                toast("修改成功")
                 clearTagEditDialogState()
                 loadData()
                 return true
             } else {
-                PopTip.show(res.message)
+                toast(res.message)
                 return false
             }
         } catch (e: Exception) {
-            PopTip.show("网络请求失败")
+            toast("网络请求失败")
             return false
         }
     }
@@ -130,13 +130,13 @@ internal class MyFollowViewModel(
                 .awaitCall()
                 .json<MessageInfo>()
             if (res.isSuccess) {
-                PopTip.show("删除成功")
+                toast("删除成功")
                 loadData()
             } else {
-                PopTip.show(res.message)
+                toast(res.message)
             }
         } catch (e: Exception) {
-            PopTip.show("网络请求失败")
+            toast("网络请求失败")
         }
     }
 
@@ -153,7 +153,7 @@ internal class MyFollowViewModel(
                 .awaitCall()
                 .json<MessageInfo>()
             if (res.isSuccess) {
-                PopTip.show("操作成功")
+                toast("操作成功")
                 // 刷新分组数量
                 loadData()
                 // 分组列表操作
@@ -184,10 +184,10 @@ internal class MyFollowViewModel(
                     )
                 }
             } else {
-                PopTip.show(res.message)
+                toast(res.message)
             }
         } catch (e: Exception) {
-            PopTip.show("网络请求失败")
+            toast("网络请求失败")
         }
     }
 

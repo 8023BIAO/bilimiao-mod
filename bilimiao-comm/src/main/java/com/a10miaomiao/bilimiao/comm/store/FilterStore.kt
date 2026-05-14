@@ -18,7 +18,7 @@ import com.a10miaomiao.bilimiao.comm.network.MiaoHttp.Companion.json
 import com.a10miaomiao.bilimiao.comm.store.base.BaseStore
 import com.a10miaomiao.bilimiao.comm.utils.miaoLogger
 import com.a10miaomiao.bilimiao.comm.utils.NumberUtil
-import com.kongzue.dialogx.dialogs.PopTip
+import com.a10miaomiao.bilimiao.comm.toast
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import org.kodein.di.DI
@@ -108,7 +108,7 @@ class FilterStore(override val di: DI) :
     fun addWord(keyword: String) {
         filterWordDB.insert(keyword)
         queryFilterWord()
-        PopTip.show("添加成功")
+        toast("添加成功")
     }
 
     fun setWord(oldWord: String, newWord: String) {
@@ -120,7 +120,7 @@ class FilterStore(override val di: DI) :
         val keyword = state.filterWordList[index]
         filterWordDB.deleteByKeyword(keyword)
         queryFilterWord()
-        PopTip.show("删除成功")
+        toast("删除成功")
     }
 
     fun deleteWord(keywordList: List<String>) {
@@ -128,19 +128,19 @@ class FilterStore(override val di: DI) :
             filterWordDB.deleteByKeyword(it)
         }
         queryFilterWord()
-        PopTip.show("删除成功")
+        toast("删除成功")
     }
 
     fun addUpper(mid: Long, name: String) {
         filterUpperDB.insert(mid, name)
         queryFilterUpper()
-        PopTip.show("已添加屏蔽")
+        toast("已添加屏蔽")
     }
 
     fun deleteUpper(mid: Long) {
         filterUpperDB.deleteByMid(mid)
         queryFilterUpper()
-        PopTip.show("已取消屏蔽")
+        toast("已取消屏蔽")
     }
 
     fun deleteUpper(midList: List<Long>) {
@@ -148,7 +148,7 @@ class FilterStore(override val di: DI) :
             filterUpperDB.deleteByMid(it)
         }
         queryFilterUpper()
-        PopTip.show("删除成功")
+        toast("删除成功")
     }
 
     fun filterUpper(mid: String) = filterUpper(mid.toLong())
@@ -202,7 +202,7 @@ class FilterStore(override val di: DI) :
     fun addTag(name: String) {
         filterTagDB.insert(name)
         queryFilterTag()
-        PopTip.show("添加成功")
+        toast("添加成功")
     }
 
     fun setTag(old: String, new: String) {
@@ -214,7 +214,7 @@ class FilterStore(override val di: DI) :
         val name = state.filterTagList[index]
         filterTagDB.deleteByTagName(name)
         queryFilterTag()
-        PopTip.show("删除成功")
+        toast("删除成功")
     }
 
     fun deleteTag(tagList: List<String>) {
@@ -222,7 +222,7 @@ class FilterStore(override val di: DI) :
             filterTagDB.deleteByTagName(it)
         }
         queryFilterTag()
-        PopTip.show("删除成功")
+        toast("删除成功")
     }
 
     fun filterTagListIsEmpty() = state.filterTagList.isEmpty()

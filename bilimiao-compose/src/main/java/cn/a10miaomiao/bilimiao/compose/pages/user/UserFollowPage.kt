@@ -39,7 +39,7 @@ import com.a10miaomiao.bilimiao.comm.network.BiliApiService
 import com.a10miaomiao.bilimiao.comm.network.MiaoHttp.Companion.json
 import com.a10miaomiao.bilimiao.comm.store.UserStore
 import com.a10miaomiao.bilimiao.store.WindowStore
-import com.kongzue.dialogx.dialogs.PopTip
+import com.a10miaomiao.bilimiao.comm.toast
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
@@ -163,7 +163,7 @@ private class UserFollowPageViewModel(
         try {
             if (!userStore.isLogin()) {
                 withContext(Dispatchers.Main) {
-                    PopTip.show("请先登录")
+                    toast("请先登录")
                 }
                 return@launch
             }
@@ -190,7 +190,7 @@ private class UserFollowPageViewModel(
                     }
                 }
                 withContext(Dispatchers.Main) {
-                    PopTip.show(
+                    toast(
                         if (mode == 2) {
                             "已取消关注"
                         } else {
@@ -200,12 +200,12 @@ private class UserFollowPageViewModel(
                 }
             } else {
                 withContext(Dispatchers.Main) {
-                    PopTip.show(res.message)
+                    toast(res.message)
                 }
             }
         } catch (e: Exception) {
             withContext(Dispatchers.Main) {
-                PopTip.show("网络错误")
+                toast("网络错误")
             }
             e.printStackTrace()
         }

@@ -54,9 +54,6 @@ import cn.a10miaomiao.bilimiao.compose.components.list.SwipeToRefresh
 import cn.a10miaomiao.bilimiao.compose.components.video.VideoItemBox
 import cn.a10miaomiao.bilimiao.compose.pages.playlist.PlayListPage
 import cn.a10miaomiao.bilimiao.compose.pages.user.components.TitleBar
-import cn.a10miaomiao.bilimiao.compose.pages.video.components.VideoDownloadDialog
-import cn.a10miaomiao.bilimiao.compose.pages.video.components.VideoDownloadDialogState
-import cn.a10miaomiao.bilimiao.download.DownloadService
 import com.a10miaomiao.bilimiao.comm.delegate.player.BasePlayerDelegate
 import com.a10miaomiao.bilimiao.comm.delegate.player.VideoPlayerSource
 import com.a10miaomiao.bilimiao.comm.entity.MessageInfo
@@ -73,7 +70,7 @@ import com.a10miaomiao.bilimiao.comm.store.PlayerStore
 import com.a10miaomiao.bilimiao.comm.store.UserStore
 import com.a10miaomiao.bilimiao.comm.utils.NumberUtil
 import com.a10miaomiao.bilimiao.store.WindowStore
-import com.kongzue.dialogx.dialogs.PopTip
+import com.a10miaomiao.bilimiao.comm.toast
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
@@ -100,10 +97,6 @@ private class UserSeasonDetailViewModel(
     private val playerDelegate: BasePlayerDelegate by instance()
     private val playerStore by instance<PlayerStore>()
     private val playListStore by instance<PlayListStore>()
-
-    val downloadDialogState = VideoDownloadDialogState(
-        scope = viewModelScope,
-    )
 
     var seasonInfo = MutableStateFlow<bilibili.app.view.v1.UgcSeason?>(null)
     val isRefreshing = MutableStateFlow(false)
@@ -166,7 +159,7 @@ private class UserSeasonDetailViewModel(
             ).awaitCall().json<ResponseData<ArchiveRelationInfo>>()
             favState.value = if (res.requireData().season_fav) 1 else 0
         } catch (e: Exception) {
-            PopTip.show("获取订阅状态失败")
+            toast("获取订阅状态失败")
             e.printStackTrace()
         }
     }
@@ -237,7 +230,7 @@ private class UserSeasonDetailViewModel(
     fun addPlayList() {
         val season = seasonInfo.value
         if (season == null) {
-            PopTip.show("数据加载中，请稍后再试")
+            toast("数据加载中，请稍后再试")
             return
         }
         val currentId = curSection.value?.id
@@ -260,14 +253,14 @@ private class UserSeasonDetailViewModel(
                 .awaitCall()
                 .json<MessageInfo>()
             if (res.isSuccess) {
-                PopTip.show("订阅成功")
+                toast("订阅成功")
                 favState.value = 1
             } else {
-                PopTip.show(res.message)
+                toast(res.message)
             }
         } catch (e: Exception) {
             e.printStackTrace()
-            PopTip.show(e.message ?: e.toString())
+            toast(e.message ?: e.toString())
         }
     }
 
@@ -280,48 +273,19 @@ private class UserSeasonDetailViewModel(
                 .awaitCall()
                 .json<MessageInfo>()
             if (res.isSuccess) {
-                PopTip.show("已取消订阅")
+                toast("已取消订阅")
                 favState.value = 0
             } else {
-                PopTip.show(res.message)
+                toast(res.message)
             }
         } catch (e: Exception) {
             e.printStackTrace()
-            PopTip.show(e.message ?: e.toString())
-        }
-    }
-
-    fun openDownloadDialog() {
-        val episodes = list.data.value
-        if (episodes.isEmpty()) {
-            PopTip.show("没有可下载的视频")
-            return
-        }
-        viewModelScope.launch {
-            val service = DownloadService.getService(activity)
-            val seasonEpisodes = episodes.map { ep ->
-                VideoDownloadDialogState.SeasonEpisodeItem(
-                    aid = ep.aid,
-                    title = ep.title,
-                    cover = ep.cover,
-                    duration = NumberUtil.converDuration(ep.page?.duration ?: 0),
-                )
-            }
-            downloadDialogState.show(
-                service = service,
-                bvid = "",
-                videoPages = emptyList(),
-                context = activity,
-                ugcSeasonEpisodes = seasonEpisodes,
-            )
+            toast(e.message ?: e.toString())
         }
     }
 
     fun menuItemClick(view: View, item: MenuItemPropInfo) {
         when (item.key) {
-            MenuKeys.download -> {
-                openDownloadDialog()
-            }
             MenuKeys.playList -> {
                 addPlayList()
                 toPlayListPage()
@@ -384,10 +348,6 @@ internal fun UserSeasonDetailContent(
                     myItem {
                         key = MenuKeys.playList
                         title = "设置为播放列表"
-                    }
-                    myItem {
-                        key = MenuKeys.download
-                        title = "下载合集"
                     }
                 }
             }
@@ -469,15 +429,6 @@ internal fun UserSeasonDetailContent(
                 )
             },
             action = {
-                TextButton(
-                    onClick = { viewModel.openDownloadDialog() },
-                ) {
-                    Text(
-                        text = "下载",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.primary,
-                    )
-                }
                 Text(
                     text = "自动连播",
                     style = MaterialTheme.typography.labelMedium,
@@ -547,5 +498,4 @@ internal fun UserSeasonDetailContent(
             }
         }
     }
-    VideoDownloadDialog(state = viewModel.downloadDialogState)
 }

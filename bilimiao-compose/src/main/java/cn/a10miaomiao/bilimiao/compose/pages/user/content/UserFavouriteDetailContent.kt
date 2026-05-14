@@ -56,9 +56,6 @@ import cn.a10miaomiao.bilimiao.compose.pages.user.UserFavouriteDetailPage
 import cn.a10miaomiao.bilimiao.compose.pages.user.components.FavouriteEditForm
 import cn.a10miaomiao.bilimiao.compose.pages.user.components.FavouriteEditFormState
 import cn.a10miaomiao.bilimiao.compose.pages.user.components.TitleBar
-import cn.a10miaomiao.bilimiao.compose.pages.video.components.VideoDownloadDialog
-import cn.a10miaomiao.bilimiao.compose.pages.video.components.VideoDownloadDialogState
-import cn.a10miaomiao.bilimiao.download.DownloadService
 import com.a10miaomiao.bilimiao.comm.delegate.player.BasePlayerDelegate
 import com.a10miaomiao.bilimiao.comm.delegate.player.VideoPlayerSource
 import com.a10miaomiao.bilimiao.comm.entity.MessageInfo
@@ -78,7 +75,7 @@ import com.a10miaomiao.bilimiao.comm.store.PlayerStore
 import com.a10miaomiao.bilimiao.comm.store.UserStore
 import com.a10miaomiao.bilimiao.comm.utils.NumberUtil
 import com.a10miaomiao.bilimiao.store.WindowStore
-import com.kongzue.dialogx.dialogs.PopTip
+import com.a10miaomiao.bilimiao.comm.toast
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
@@ -100,10 +97,6 @@ class UserFavouriteDetailViewModel(
     private val playerDelegate: BasePlayerDelegate by instance()
     private val playerStore by instance<PlayerStore>()
     private val playListStore by instance<PlayListStore>()
-
-    val downloadDialogState = VideoDownloadDialogState(
-        scope = viewModelScope,
-    )
 
     var mediaInfo = MutableStateFlow<MediaListInfo?>(null)
     val isRefreshing = MutableStateFlow(false)
@@ -192,7 +185,7 @@ class UserFavouriteDetailViewModel(
                 }
                 return
             } else {
-                PopTip.show("自动连播仅支持普通视频")
+                toast("自动连播仅支持普通视频")
             }
         }
         if (ugcInfo != null) {
@@ -205,7 +198,7 @@ class UserFavouriteDetailViewModel(
     fun addPlayList() {
         val media = mediaInfo.value
         if (media == null) {
-            PopTip.show("数据加载中，请稍后再试")
+            toast("数据加载中，请稍后再试")
             return
         }
         playListStore.setFavoriteList(media.id, media.title)
@@ -257,14 +250,14 @@ class UserFavouriteDetailViewModel(
                 .awaitCall()
                 .json<MessageInfo>()
             if (res.isSuccess) {
-                PopTip.show("订阅成功")
+                toast("订阅成功")
                 refresh()
             } else {
-                PopTip.show(res.message)
+                toast(res.message)
             }
         } catch (e: Exception) {
             e.printStackTrace()
-            PopTip.show(e.message ?: e.toString())
+            toast(e.message ?: e.toString())
         }
     }
 
@@ -277,40 +270,14 @@ class UserFavouriteDetailViewModel(
                 .awaitCall()
                 .json<MessageInfo>()
             if (res.isSuccess) {
-                PopTip.show("已取消订阅")
+                toast("已取消订阅")
                 refresh()
             } else {
-                PopTip.show(res.message)
+                toast(res.message)
             }
         } catch (e: Exception) {
             e.printStackTrace()
-            PopTip.show(e.message ?: e.toString())
-        }
-    }
-
-    fun openDownloadDialog() {
-        val items = list.data.value
-        if (items.isEmpty()) {
-            PopTip.show("没有可下载的视频")
-            return
-        }
-        viewModelScope.launch {
-            val service = DownloadService.getService(activity)
-            val seasonEpisodes = items.map { item ->
-                VideoDownloadDialogState.SeasonEpisodeItem(
-                    aid = item.id.toLongOrNull() ?: 0L,
-                    title = item.title,
-                    cover = item.cover,
-                    duration = NumberUtil.converDuration(item.duration),
-                )
-            }
-            downloadDialogState.show(
-                service = service,
-                bvid = "",
-                videoPages = emptyList(),
-                context = activity,
-                ugcSeasonEpisodes = seasonEpisodes,
-            )
+            toast(e.message ?: e.toString())
         }
     }
 
@@ -494,15 +461,6 @@ internal fun UserFavouriteDetailContent(
                 )
             },
             action = {
-                TextButton(
-                    onClick = { viewModel.openDownloadDialog() },
-                ) {
-                    Text(
-                        text = "下载",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.primary,
-                    )
-                }
                 Text(
                     text = "自动连播",
                     style = MaterialTheme.typography.labelMedium,
@@ -580,12 +538,12 @@ internal fun UserFavouriteDetailContent(
                         )
                     }.onSuccess {
                         loading = false
-                        PopTip.show("修改成功")
+                        toast("修改成功")
                         showEditDialog = false
                         onRefresh()
                     }.onFailure {
                         loading = false
-                        PopTip.show(it.message ?: it.toString())
+                        toast(it.message ?: it.toString())
                     }
                 }
                 Unit
@@ -637,11 +595,11 @@ internal fun UserFavouriteDetailContent(
                 onClose()
             }.onSuccess {
                 loading = false
-                PopTip.show("修改成功")
+                toast("修改成功")
                 showEditDialog = false
             }.onFailure {
                 loading = false
-                PopTip.show(it.message ?: it.toString())
+                toast(it.message ?: it.toString())
             }
         }
         AlertDialog(

@@ -36,7 +36,7 @@ import com.a10miaomiao.bilimiao.comm.network.MiaoHttp.Companion.json
 import com.a10miaomiao.bilimiao.comm.store.UserStore
 import com.a10miaomiao.bilimiao.comm.utils.BiliGeetestUtil
 import com.a10miaomiao.bilimiao.store.WindowStore
-import com.kongzue.dialogx.dialogs.PopTip
+import com.a10miaomiao.bilimiao.comm.toast
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
@@ -133,10 +133,10 @@ private class TelVerifyPageViewModel(
                     pageNavigation.popBackStack()
                 }
             } else {
-                PopTip.show(res.message)
+                toast(res.message)
             }
         } catch (e: Exception) {
-            PopTip.show("网络错误：$e")
+            toast("网络错误：$e")
             e.printStackTrace()
         }
     }
@@ -170,11 +170,11 @@ private class TelVerifyPageViewModel(
             if (res.isSuccess) {
                 getOauth2AccessToken(res.requireData().code)
             } else {
-                PopTip.show(res.message)
+                toast(res.message)
                 loading.value = false
             }
         } catch (e: Exception) {
-            PopTip.show("网络错误：$e")
+            toast("网络错误：$e")
             e.printStackTrace()
             loading.value = false
         }
@@ -246,10 +246,10 @@ private class TelVerifyPageViewModel(
         if (res.isSuccess) {
             startCountdown(60)
             captchaKey = res.requireData().captcha_key!!
-            PopTip.show("已发送短信验证码")
+            toast("已发送短信验证码")
             return true
         } else {
-            PopTip.show(res.message)
+            toast(res.message)
             return false
         }
     }
@@ -272,10 +272,10 @@ private class TelVerifyPageViewModel(
         if (res.isSuccess) {
             startCountdown(60)
             captchaKey = res.requireData().captcha_key!!
-            PopTip.show("已发送邮箱验证码")
+            toast("已发送邮箱验证码")
             return true
         } else {
-            PopTip.show(res.message)
+            toast(res.message)
             return false
         }
     }
@@ -291,7 +291,7 @@ private class TelVerifyPageViewModel(
         } else if (verifyType.value == VerifyType.EMAIL) {
             return sendEmail(result)
         } else {
-            PopTip.show("未知类型")
+            toast("未知类型")
             return false
         }
     }

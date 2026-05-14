@@ -57,7 +57,7 @@ import com.a10miaomiao.bilimiao.comm.network.MiaoHttp.Companion.string
 import com.a10miaomiao.bilimiao.comm.store.UserStore
 
 import com.a10miaomiao.bilimiao.store.WindowStore
-import com.kongzue.dialogx.dialogs.PopTip
+import com.a10miaomiao.bilimiao.comm.toast
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
@@ -228,7 +228,7 @@ private class TagFollowContentModel(
     ) = viewModelScope.launch(Dispatchers.IO) {
         try {
             if (!userStore.isLogin()) {
-                PopTip.show("请先登录")
+                toast("请先登录")
                 return@launch
             }
             val item = list.data.value[index]
@@ -253,7 +253,7 @@ private class TagFollowContentModel(
                         it
                     }
                 }
-                PopTip.show(
+                toast(
                     if (mode == 2) {
                         "已取消关注"
                     } else {
@@ -261,10 +261,10 @@ private class TagFollowContentModel(
                     }
                 )
             } else {
-                PopTip.show(res.message)
+                toast(res.message)
             }
         } catch (e: Exception) {
-            PopTip.show("网络错误")
+            toast("网络错误")
             e.printStackTrace()
         }
     }
@@ -290,7 +290,7 @@ private fun AttentionButton(
         Button(
             onClick = {
                 if (!isLogin) {
-                    PopTip.show("请先登录")
+                    toast("请先登录")
                     return@Button
                 }
                 if (user.isFollowing) {

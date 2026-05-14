@@ -52,7 +52,7 @@ import com.bumptech.glide.load.resource.gif.GifDrawable
 import com.bumptech.glide.request.target.CustomTarget
 import com.bumptech.glide.request.target.SimpleTarget
 import com.bumptech.glide.request.transition.Transition
-import com.kongzue.dialogx.dialogs.PopTip
+import com.a10miaomiao.bilimiao.comm.toast
 import org.kodein.di.compose.rememberInstance
 import java.io.File
 
@@ -82,7 +82,7 @@ private class MyImagePreviewerController(
             }
 
             override fun onLoadCleared(placeholder: Drawable?) {
-                PopTip.show("原图下载失败")
+                toast("原图下载失败")
                 isDownloading.value = false
             }
         }
@@ -97,7 +97,7 @@ private class MyImagePreviewerController(
         val clipboardManager = activity.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
         val clipData = ClipData.newPlainText("imageUrl", imageUrl)
         clipboardManager.setPrimaryClip(clipData)
-        PopTip.show("图片链接已复制到剪切板")
+        toast("图片链接已复制到剪切板")
     }
 
     fun shareImage(imageUrl: String) {
@@ -113,7 +113,7 @@ private class MyImagePreviewerController(
             }
 
             override fun onLoadCleared(placeholder: Drawable?) {
-                PopTip.show("原图下载失败")
+                toast("原图下载失败")
                 isDownloading.value = false
             }
         }

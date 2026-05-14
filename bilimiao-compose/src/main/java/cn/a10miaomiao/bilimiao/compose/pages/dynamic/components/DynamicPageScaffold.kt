@@ -46,7 +46,7 @@ import cn.a10miaomiao.bilimiao.compose.common.localContainerView
 import cn.a10miaomiao.bilimiao.compose.common.localEmitter
 import cn.a10miaomiao.bilimiao.compose.common.toPaddingValues
 import com.a10miaomiao.bilimiao.store.WindowStore
-import com.kongzue.dialogx.dialogs.PopTip
+import com.a10miaomiao.bilimiao.comm.toast
 import kotlinx.coroutines.launch
 import org.kodein.di.compose.rememberInstance
 
@@ -96,7 +96,7 @@ fun DynamicPageScaffold(
                                 if (pagerState.pageCount > 1) {
                                     pagerState.animateScrollToPage(1)
                                 } else {
-                                    PopTip.show("请先登录")
+                                    toast("请先登录")
                                 }
                             }
                         },

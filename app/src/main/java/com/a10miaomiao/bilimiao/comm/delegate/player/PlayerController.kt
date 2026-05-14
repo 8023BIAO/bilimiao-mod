@@ -43,6 +43,7 @@ import com.a10miaomiao.bilimiao.widget.player.DanmakuVideoPlayer
 import com.a10miaomiao.bilimiao.widget.player.VideoPlayerCallBack
 import master.flame.danmaku.controller.DanmakuFilters
 import com.a10miaomiao.bilimiao.widget.scaffold.ScaffoldView
+import com.a10miaomiao.bilimiao.comm.toast
 import com.kongzue.dialogx.dialogs.PopTip
 import com.shuyu.gsyvideoplayer.listener.GSYVideoProgressListener
 import com.shuyu.gsyvideoplayer.utils.GSYVideoType
@@ -612,7 +613,7 @@ class PlayerController(
 
     private fun showSendDanmakuPage(view: View) {
         if (!userStore.isLogin()) {
-            PopTip.show("请先登录")
+            toast("请先登录")
             return
         }
         if (delegate.isPlaying()) {
@@ -645,10 +646,10 @@ class PlayerController(
                         delegate.picInPicHelper?.enterPictureInPictureMode(aspectRatio)
                     } catch (e: Exception) {
                         e.printStackTrace()
-                        PopTip.show("此设备不支持小窗播放")
+                        toast("此设备不支持小窗播放")
                     }
                 } else {
-                    PopTip.show("小窗播放功能需要安卓8.0及以上版本")
+                    toast("小窗播放功能需要安卓8.0及以上版本")
                 }
             }
 

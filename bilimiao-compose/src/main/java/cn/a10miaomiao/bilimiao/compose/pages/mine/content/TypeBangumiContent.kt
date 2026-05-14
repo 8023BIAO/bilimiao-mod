@@ -52,7 +52,7 @@ import com.a10miaomiao.bilimiao.comm.network.BiliApiService
 import com.a10miaomiao.bilimiao.comm.network.MiaoHttp.Companion.json
 import com.a10miaomiao.bilimiao.comm.store.UserStore
 import com.a10miaomiao.bilimiao.store.WindowStore
-import com.kongzue.dialogx.dialogs.PopTip
+import com.a10miaomiao.bilimiao.comm.toast
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
@@ -162,7 +162,7 @@ class TypeBangumiContentViewModel(
         status: Int,
     ) = viewModelScope.launch {
         if (!userStore.isLogin()) {
-            PopTip.show("请先登录")
+            toast("请先登录")
             return@launch
         }
         try {
@@ -187,16 +187,16 @@ class TypeBangumiContentViewModel(
                     it.season_id != item.season_id
                 }
                 if (status == 0) {
-                    PopTip.show("已取消$typeName")
+                    toast("已取消$typeName")
                 } else {
-                    PopTip.show("操作成功")
+                    toast("操作成功")
                 }
             } else {
-                PopTip.show(res.message)
+                toast(res.message)
             }
         } catch (e: Exception) {
             e.printStackTrace()
-            PopTip.show("操作失败：" + (e.message ?: e.toString()))
+            toast("操作失败：" + (e.message ?: e.toString()))
         }
 
     }

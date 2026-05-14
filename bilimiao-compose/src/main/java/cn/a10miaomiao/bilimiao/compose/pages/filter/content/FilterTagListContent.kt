@@ -44,7 +44,7 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModel
 import cn.a10miaomiao.bilimiao.compose.common.diViewModel
 import com.a10miaomiao.bilimiao.comm.store.FilterStore
-import com.kongzue.dialogx.dialogs.PopTip
+import com.a10miaomiao.bilimiao.comm.toast
 import kotlinx.coroutines.launch
 import org.kodein.di.DI
 import org.kodein.di.DIAware
@@ -66,7 +66,7 @@ internal class FilterTagListContentModel(
         if (filterTagList.indexOf(text) == -1) {
             filterStore.addTag(text)
         } else {
-            PopTip.show("该标签已存在")
+            toast("该标签已存在")
         }
     }
 
@@ -77,7 +77,7 @@ internal class FilterTagListContentModel(
     fun deleteSelected(selectedMap: Map<String, Int>) {
         val tagList = selectedMap.keys.toList()
         if (tagList.isEmpty()) {
-            PopTip.show("未选择标签")
+            toast("未选择标签")
         }
         filterStore.deleteTag(tagList)
     }

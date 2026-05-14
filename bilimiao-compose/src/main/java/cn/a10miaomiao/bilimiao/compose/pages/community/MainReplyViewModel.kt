@@ -27,7 +27,7 @@ import com.a10miaomiao.bilimiao.comm.network.BiliApiService
 import com.a10miaomiao.bilimiao.comm.network.BiliGRPCHttp
 import com.a10miaomiao.bilimiao.comm.network.MiaoHttp.Companion.json
 import com.a10miaomiao.bilimiao.comm.store.UserStore
-import com.kongzue.dialogx.dialogs.PopTip
+import com.a10miaomiao.bilimiao.comm.toast
 import com.kongzue.dialogx.dialogs.TipDialog
 import com.kongzue.dialogx.dialogs.WaitDialog
 import kotlinx.coroutines.Dispatchers
@@ -170,7 +170,7 @@ class MainReplyViewModel(
 
     fun likeReplyAt(index: Int) = viewModelScope.launch(Dispatchers.IO) {
         if (!userStore.isLogin()) {
-            PopTip.show("请先登录")
+            toast("请先登录")
             return@launch
         }
         try {
@@ -196,18 +196,18 @@ class MainReplyViewModel(
                     _currentReply.value = newItem
                 }
             } else {
-                PopTip.show(res.message)
+                toast(res.message)
             }
         } catch (e: Exception) {
             e.printStackTrace()
-            PopTip.show("加载失败:" + e.message ?: e.toString())
+            toast("加载失败:" + e.message ?: e.toString())
         }
     }
 
     // 用评论ID点赞，避免index错位
     fun likeReplyById(rpid: Long) = viewModelScope.launch(Dispatchers.IO) {
         if (!userStore.isLogin()) {
-            PopTip.show("请先登录")
+            toast("请先登录")
             return@launch
         }
         try {
@@ -235,11 +235,11 @@ class MainReplyViewModel(
                     _currentReply.value = newItem
                 }
             } else {
-                PopTip.show(res.message)
+                toast(res.message)
             }
         } catch (e: Exception) {
             e.printStackTrace()
-            PopTip.show("加载失败:" + e.message ?: e.toString())
+            toast("加载失败:" + e.message ?: e.toString())
         }
     }
 
@@ -281,7 +281,7 @@ class MainReplyViewModel(
                 .json<MessageInfo>()
             if (res.isSuccess) {
                 withContext(Dispatchers.Main) {
-                    PopTip.show("删除成功")
+                    toast("删除成功")
                     messageDialog.close()
                     if (currentReply.value?.id == reply.id) {
                         _currentReply.value = null
@@ -329,7 +329,7 @@ class MainReplyViewModel(
 
     fun openReplyDialog() {
         if (!isLogin()) {
-            PopTip.show("请先登录")
+            toast("请先登录")
             return
         }
         val params = ReplyEditParams(

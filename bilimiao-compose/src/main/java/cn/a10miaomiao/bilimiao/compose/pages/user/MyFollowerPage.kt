@@ -41,7 +41,7 @@ import com.a10miaomiao.bilimiao.store.WindowStore
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.integration.compose.placeholder
-import com.kongzue.dialogx.dialogs.PopTip
+import com.a10miaomiao.bilimiao.comm.toast
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
@@ -147,16 +147,16 @@ private class MyFollowerViewModel(
             if (res.code == 0) {
                 list.data.value = list.data.value.filter { it.mid != target.mid }
                 withContext(Dispatchers.Main) {
-                    PopTip.show("已移除粉丝 ${target.uname}")
+                    toast("已移除粉丝 ${target.uname}")
                 }
             } else {
                 withContext(Dispatchers.Main) {
-                    PopTip.show(res.message)
+                    toast(res.message)
                 }
             }
         } catch (e: Exception) {
             withContext(Dispatchers.Main) {
-                PopTip.show("操作失败: ${e.message}")
+                toast("操作失败: ${e.message}")
             }
         }
     }

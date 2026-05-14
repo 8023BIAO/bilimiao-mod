@@ -42,7 +42,7 @@ import cn.a10miaomiao.bilimiao.compose.pages.user.UserFavouriteDetailPage
 import cn.a10miaomiao.bilimiao.compose.pages.user.UserFavouritePage
 import cn.a10miaomiao.bilimiao.compose.pages.video.VideoDetailPage
 import com.a10miaomiao.bilimiao.comm.store.UserLibraryStore
-import com.kongzue.dialogx.dialogs.PopTip
+import com.a10miaomiao.bilimiao.comm.toast
 import org.kodein.di.compose.rememberInstance
 
 
@@ -71,7 +71,7 @@ fun StartLibraryCard(
                     if (userId != null) {
                         navigateTo(UserFavouritePage(userId.toString()))
                     } else {
-                        PopTip.show("请先登录")
+                        toast("请先登录")
                     }
                 },
             ) {
@@ -93,7 +93,7 @@ fun StartLibraryCard(
                                         )
                                     )
                                 } else {
-                                    PopTip.show("无默认收藏夹信息")
+                                    toast("无默认收藏夹信息")
                                 }
                             }
                             .padding(vertical = 4.dp, horizontal = 8.dp)
@@ -112,7 +112,7 @@ fun StartLibraryCard(
                                         type = "collected"
                                     ))
                                 } else {
-                                    PopTip.show("请先登录")
+                                    toast("请先登录")
                                 }
                             }
                             .padding(vertical = 4.dp, horizontal = 8.dp)
@@ -134,7 +134,7 @@ fun StartLibraryCard(
                     if (userId != null) {
                         navigateTo(MyBangumiPage())
                     } else {
-                        PopTip.show("请先登录")
+                        toast("请先登录")
                     }
                 },
             ) {
@@ -184,7 +184,7 @@ fun StartLibraryCard(
                     if (userId != null) {
                         navigateTo(HistoryPage())
                     } else {
-                        PopTip.show("请先登录")
+                        toast("请先登录")
                     }
                 },
             ) {
@@ -231,7 +231,7 @@ fun StartLibraryCard(
                     if (userId != null) {
                         navigateTo(WatchLaterPage())
                     } else {
-                        PopTip.show("请先登录")
+                        toast("请先登录")
                     }
                 },
             ) {

@@ -53,7 +53,7 @@ import com.a10miaomiao.bilimiao.comm.network.MiaoHttp
 import com.a10miaomiao.bilimiao.comm.network.MiaoHttp.Companion.json
 import com.a10miaomiao.bilimiao.comm.store.PlayerStore
 import com.a10miaomiao.bilimiao.store.WindowStore
-import com.kongzue.dialogx.dialogs.PopTip
+import com.a10miaomiao.bilimiao.comm.toast
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
@@ -176,13 +176,13 @@ internal class LyricPageViewModel(
                 addSource(addList)
             } else {
                 withContext(Dispatchers.Main) {
-                    PopTip.show("网易云歌词列表加载失败"+res.code.toString())
+                    toast("网易云歌词列表加载失败"+res.code.toString())
                 }
             }
         } catch (e: Exception) {
             e.printStackTrace()
             withContext(Dispatchers.Main) {
-                PopTip.show("网易云歌词列表加载失败")
+                toast("网易云歌词列表加载失败")
             }
         }
     }
@@ -203,13 +203,13 @@ internal class LyricPageViewModel(
                 addSource(addList)
             } else {
                 withContext(Dispatchers.Main) {
-                    PopTip.show("酷狗歌词列表加载失败"+res.error)
+                    toast("酷狗歌词列表加载失败"+res.error)
                 }
             }
         } catch (e: Exception) {
             e.printStackTrace()
             withContext(Dispatchers.Main) {
-                PopTip.show("酷狗歌词列表加载失败")
+                toast("酷狗歌词列表加载失败")
             }
         }
     }
@@ -330,11 +330,11 @@ internal class LyricPageViewModel(
                                 }
 
                             } else {
-                                PopTip.show(res2.info)
+                                toast(res2.info)
                                 list.add(LyricLine(0,"歌词详情获取失败"))
                             }
                         } else {
-                            PopTip.show(res1.errmsg)
+                            toast(res1.errmsg)
                             list.add(LyricLine(0,"歌词详情获取失败"))
                         }
                     }
@@ -372,7 +372,7 @@ internal class LyricPageViewModel(
                                 }
                             }
                         } else {
-                            PopTip.show("网易云歌词获取失败：${res.code}")
+                            toast("网易云歌词获取失败：${res.code}")
                             list.add(LyricLine(0,"歌词详情获取失败"))
                         }
                     }
@@ -391,7 +391,7 @@ internal class LyricPageViewModel(
             } catch (e: Exception) {
                 e.printStackTrace()
                 withContext(Dispatchers.Main) {
-                    PopTip.show("歌词详情获取失败")
+                    toast("歌词详情获取失败")
                     setMessage("歌词详情获取失败")
                 }
             } finally {
@@ -404,7 +404,7 @@ internal class LyricPageViewModel(
         when (menuItem.key) {
             1 -> {
                 if(source.value.isEmpty()){
-                    PopTip.show("无歌词源")
+                    toast("无歌词源")
                 } else {
                     LyricSourcePopupMenu(activity,this).show(view)
                 }

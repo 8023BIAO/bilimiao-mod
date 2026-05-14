@@ -26,7 +26,7 @@ import cn.a10miaomiao.bilimiao.download.LocalPlayerSource
 import cn.a10miaomiao.bilimiao.download.entry.CurrentDownloadInfo
 import com.a10miaomiao.bilimiao.comm.delegate.player.BasePlayerDelegate
 import com.a10miaomiao.bilimiao.store.WindowStore
-import com.kongzue.dialogx.dialogs.PopTip
+import com.a10miaomiao.bilimiao.comm.toast
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
@@ -68,7 +68,7 @@ internal class DownloadDetailPageViewModel(
         downloadService = service
         _loadDownloadDetail(service, dirPath)
         if (downloadInfo.value == null) {
-            PopTip.show("缓存文件错误")
+            toast("缓存文件错误")
         }
         launch {
             service.downloadListVersion.collect {
@@ -185,7 +185,7 @@ internal class DownloadDetailPageViewModel(
         viewModelScope.launch {
             val service = DownloadService.getService(fragment.requireContext())
             service.deleteDownload(info.dir_path, item.dir_path)
-            PopTip.show("已删除：" + info.title + "-"  +item.title)
+            toast("已删除：" + info.title + "-"  +item.title)
             _loadDownloadDetail(service, dirPath)
             if (downloadInfo.value == null) {
                 pageNavigation.popBackStack()
@@ -216,11 +216,12 @@ internal fun DownloadDetailPageContent(
         viewModel.loadDownloadDetail(dirPath)
     }
 
-    Column() {
+    Column(modifier = Modifier.fillMaxSize()) {
         LazyColumn(
             contentPadding = PaddingValues(bottom = windowInsets.bottomDp.dp),
             modifier = Modifier
                 .fillMaxWidth()
+                .weight(1f)
                 .padding(start = windowInsets.leftDp.dp, end = windowInsets.rightDp.dp)
         ) {
             item {

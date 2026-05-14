@@ -37,7 +37,7 @@ import com.a10miaomiao.bilimiao.comm.network.BiliApiService
 import com.a10miaomiao.bilimiao.comm.network.MiaoHttp.Companion.json
 import com.a10miaomiao.bilimiao.comm.store.UserStore
 import com.a10miaomiao.bilimiao.store.WindowStore
-import com.kongzue.dialogx.dialogs.PopTip
+import com.a10miaomiao.bilimiao.comm.toast
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
@@ -155,13 +155,13 @@ internal class DownloadBangumiCreatePageViewModel(
                 _seasonDetail = res.data
             } else {
                 withContext(Dispatchers.Main) {
-                    PopTip.show(res.message)
+                    toast(res.message)
                 }
             }
         } catch (e: Exception) {
             e.printStackTrace()
             withContext(Dispatchers.Main) {
-                PopTip.show("网络请求失败")
+                toast("网络请求失败")
             }
         }
     }
@@ -192,17 +192,17 @@ internal class DownloadBangumiCreatePageViewModel(
 
     fun startDownload() {
         if (_seasonDetail == null) {
-            PopTip.show("番剧信息未加载")
+            toast("番剧信息未加载")
             return
         }
         val checkedList = checkedSet.value
         val episodeList = list.data.value
         if (checkedList.isEmpty()) {
-            PopTip.show("请选择分集")
+            toast("请选择分集")
             return
         }
         if (acceptQuality.value.quality == 0) {
-            PopTip.show("请选择清晰度")
+            toast("请选择清晰度")
             return
         }
         viewModelScope.launch {
@@ -213,7 +213,7 @@ internal class DownloadBangumiCreatePageViewModel(
                 }
             }
             withContext(Dispatchers.Main) {
-                PopTip.show("成功创建${checkedList.size}条记录")
+                toast("成功创建${checkedList.size}条记录")
             }
             checkedSet.value = emptySet()
             getDowbloadedList(downloadService, _sid)

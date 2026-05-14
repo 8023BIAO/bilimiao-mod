@@ -16,7 +16,7 @@ import com.a10miaomiao.bilimiao.comm.entity.archive.SeriesListInfo
 import com.a10miaomiao.bilimiao.comm.entity.user.SpaceInfo
 import com.a10miaomiao.bilimiao.comm.network.BiliApiService
 import com.a10miaomiao.bilimiao.comm.network.MiaoHttp.Companion.json
-import com.kongzue.dialogx.dialogs.PopTip
+import com.a10miaomiao.bilimiao.comm.toast
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -100,7 +100,7 @@ class UserArchiveViewModel(
 //                }
                 list.finished.value = !res.requireData().has_next
             } else {
-                PopTip.show(res.message)
+                toast(res.message)
                 throw Exception(res.message)
             }
         } catch (e: Exception) {
@@ -145,7 +145,7 @@ class UserArchiveViewModel(
                 _seriesList.value = result.items
                 _seriesTotal.value = result.page.total
             } else {
-                PopTip.show(res.message)
+                toast(res.message)
             }
         } catch (e: Exception) {
             e.printStackTrace()

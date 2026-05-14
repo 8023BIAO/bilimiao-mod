@@ -64,7 +64,7 @@ import com.a10miaomiao.bilimiao.comm.store.UserStore
 import com.a10miaomiao.bilimiao.comm.utils.BiliGeetestUtil
 import com.a10miaomiao.bilimiao.comm.utils.UrlUtil
 import com.a10miaomiao.bilimiao.store.WindowStore
-import com.kongzue.dialogx.dialogs.PopTip
+import com.a10miaomiao.bilimiao.comm.toast
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -189,7 +189,7 @@ private class SMSLoginPageViewModel(
             }
             loading.value = false
         } catch (e: Exception) {
-            PopTip.show("网络错误：$e")
+            toast("网络错误：$e")
             e.printStackTrace()
             loading.value = false
         }
@@ -254,14 +254,14 @@ private class SMSLoginPageViewModel(
             }
             captchaKey = res.requireData().captcha_key!!
             startCountdown(60)
-            PopTip.show("已发送短信验证码")
+            toast("已发送短信验证码")
             return true
         } else if (res.code == -105 && gt3Result == null) {
             recaptchaUrl = res.requireData().recaptcha_url!!
             biliGeetestUtil.startCustomFlow(this)
             return false
         } else {
-            PopTip.show(res.message)
+            toast(res.message)
             return false
         }
     }

@@ -58,7 +58,7 @@ import cn.a10miaomiao.bilimiao.compose.components.zoomable.previewer.rememberTra
 import cn.a10miaomiao.bilimiao.compose.pages.user.UserArchiveViewModel
 import cn.a10miaomiao.bilimiao.compose.pages.user.UserSpaceViewModel
 import com.a10miaomiao.bilimiao.comm.utils.NumberUtil
-import com.kongzue.dialogx.dialogs.PopTip
+import com.a10miaomiao.bilimiao.comm.toast
 import com.a10miaomiao.bilimiao.comm.utils.UrlUtil
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
@@ -258,7 +258,7 @@ fun UserSpaceHeader(
                             if (viewModel.isSelf || viewModel.userStore.isLogin()) {
                                 viewModel.toFollow()
                             } else {
-                                PopTip.show("请先登录")
+                                toast("请先登录")
                             }
                         },
                     )
