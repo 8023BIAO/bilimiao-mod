@@ -45,11 +45,14 @@ fun BilimiaoTheme(
             SnackbarHost(
                 hostState = snackbarHostState,
                 modifier = Modifier
-                    .align(Alignment.BottomCenter),
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = 60.dp),
                 snackbar = { data ->
                     Snackbar(
                         snackbarData = data,
                         shape = MaterialTheme.shapes.small,
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                        contentColor = MaterialTheme.colorScheme.onSurface,
                     )
                 }
             )
