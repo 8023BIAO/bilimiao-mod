@@ -15,8 +15,8 @@ android {
         applicationId = "com.a10miaomiao.bilimiao.mod"
         minSdk = 21
         targetSdk = 36
-        versionCode = 16
-        versionName = "2026.05.14-05"
+        versionCode = 17
+        versionName = "2026.05.14-06"
 
         flavorDimensions("default")
 
@@ -49,8 +49,8 @@ android {
             manifestPlaceholders["channel"] = "Development"
         }
         release {
-            isMinifyEnabled = false
-            isShrinkResources = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             // 跳过 lintVital，节省大量时间
             lint { checkReleaseBuilds = false }
             proguardFiles(
