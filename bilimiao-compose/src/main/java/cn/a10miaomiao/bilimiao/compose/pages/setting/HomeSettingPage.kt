@@ -88,6 +88,22 @@ private fun HomeSettingPageContent(
         SettingPreferences.run { context.dataStore }
     }
 
+    val showTimeSelect = remember {
+        kotlinx.coroutines.runBlocking {
+            SettingPreferences.run {
+                SettingPreferences.mapData(context) { prefs ->
+                    prefs[SettingPreferences.TimeSelectShow] ?: true
+                }
+            }
+        }
+    }
+
+    val entryViewValues = if (showTimeSelect) {
+        viewModel.entryViews.keys.toList()
+    } else {
+        viewModel.entryViews.keys.toList() - SettingConstants.HOME_ENTRY_VIEW_TIME_SELECT
+    }
+
     ProvidePreferenceLocals(
         flow = rememberPreferenceFlow(dataStore)
     ) {
@@ -120,7 +136,7 @@ private fun HomeSettingPageContent(
                 summary = {
                     Text(text = "当前: " + viewModel.entryViews[it])
                 },
-                values = viewModel.entryViews.keys.toList(),
+                values = entryViewValues,
                 valueToText = {
                     val text = viewModel.entryViews[it]
                     AnnotatedString(text ?: "未知")
@@ -130,6 +146,13 @@ private fun HomeSettingPageContent(
                 key = SettingPreferences.HomeTimeMachineShow.name,
                 title = {
                     Text("显示时光姬")
+                },
+                defaultValue = true,
+            )
+            switchPreference(
+                key = SettingPreferences.TimeSelectShow.name,
+                title = {
+                    Text("显示时光精选")
                 },
                 defaultValue = true,
             )
@@ -152,7 +175,8 @@ private fun HomeSettingPageContent(
                 key = "time_select",
                 title = { Text("时光精选设置") },
                 summary = { Text("自定义精选高质量旧视频的算法") },
-                onClick = viewModel::toTimeSelectSettingPage,
+                enabled = showTimeSelect,
+                onClick = if (showTimeSelect) viewModel::toTimeSelectSettingPage else null,
             )
 
             preferenceCategory(

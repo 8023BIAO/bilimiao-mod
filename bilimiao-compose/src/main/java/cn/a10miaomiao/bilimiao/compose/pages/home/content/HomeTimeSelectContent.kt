@@ -26,6 +26,7 @@ import cn.a10miaomiao.bilimiao.compose.common.localContainerView
 import cn.a10miaomiao.bilimiao.compose.common.localEmitter
 import cn.a10miaomiao.bilimiao.compose.common.navigation.PageNavigation
 import cn.a10miaomiao.bilimiao.compose.common.toPaddingValues
+import cn.a10miaomiao.bilimiao.compose.components.list.SwipeToRefresh
 import cn.a10miaomiao.bilimiao.compose.components.video.VideoItemBox
 import cn.a10miaomiao.bilimiao.compose.pages.home.HomePageState
 import com.a10miaomiao.bilimiao.comm.datastore.SettingConstants
@@ -65,6 +66,7 @@ private class HomeTimeSelectContentViewModel(
     }
 
     val loadState = MutableStateFlow<LoadState>(LoadState.Loading)
+    val isRefreshing = MutableStateFlow(false)
 
     private data class TimeSelectConfig(
         val timeFrom: String,
@@ -75,7 +77,6 @@ private class HomeTimeSelectContentViewModel(
         val pageSize: Int,
         val minDuration: Int,
         val minPlayCount: Int,
-        val originalOnly: Boolean,
     )
 
     init {
@@ -83,15 +84,17 @@ private class HomeTimeSelectContentViewModel(
     }
 
     fun refresh() {
-        loadState.value = LoadState.Loading
-        loadData()
+        if (isRefreshing.value) return
+        isRefreshing.value = true
+        loadData(isRefresh = true)
     }
 
-    private fun loadData() = viewModelScope.launch(Dispatchers.IO) {
+    private fun loadData(isRefresh: Boolean = false) = viewModelScope.launch(Dispatchers.IO) {
         try {
             val config = readConfig()
             if (config.selectedRegions.isEmpty()) {
                 loadState.value = LoadState.Error("没有选择分区，请去设置中配置")
+                if (isRefresh) isRefreshing.value = false
                 return@launch
             }
 
@@ -128,32 +131,34 @@ private class HomeTimeSelectContentViewModel(
                 }
             }
 
-            // 去重（按 avid）
-            val seen = mutableSetOf<Long>()
+            // 去重（按 id）
+            val seen = mutableSetOf<String>()
             val uniqueVideos = mutableListOf<RegionVideoInfo>()
             for ((video, _) in allVideos) {
-                if (video.aid !in seen) {
-                    seen.add(video.aid)
+                if (video.id !in seen) {
+                    seen.add(video.id)
                     uniqueVideos.add(video)
                 }
             }
 
             if (uniqueVideos.isEmpty()) {
                 loadState.value = LoadState.Error("没有找到符合条件的视频")
+                if (isRefresh) isRefreshing.value = false
                 return@launch
             }
 
             // 应用过滤
-            var filtered = uniqueVideos
-            if (config.minDuration > 0) {
-                filtered = filtered.filter { (it.duration ?: 0) >= config.minDuration }
-            }
-            if (config.minPlayCount > 0) {
-                filtered = filtered.filter { (it.stat?.view ?: 0) >= config.minPlayCount }
+            val filtered = uniqueVideos.filter { video ->
+                val passDuration = config.minDuration <= 0 ||
+                    (video.duration.toIntOrNull() ?: 0) >= config.minDuration
+                val passPlayCount = config.minPlayCount <= 0 ||
+                    (video.play.toLongOrNull() ?: 0L) >= config.minPlayCount
+                passDuration && passPlayCount
             }
 
             if (filtered.isEmpty()) {
                 loadState.value = LoadState.Error("过滤后没有符合条件的视频")
+                if (isRefresh) isRefreshing.value = false
                 return@launch
             }
 
@@ -163,6 +168,8 @@ private class HomeTimeSelectContentViewModel(
             loadState.value = LoadState.Success(scored)
         } catch (e: Exception) {
             loadState.value = LoadState.Error("加载失败: ${e.message}")
+        } finally {
+            if (isRefresh) isRefreshing.value = false
         }
     }
 
@@ -172,49 +179,52 @@ private class HomeTimeSelectContentViewModel(
     ): List<RegionVideoInfo> {
         if (videos.isEmpty()) return videos
 
-        // 收集每个指标的 min/max
-        var minCoin = Long.MAX_VALUE; var maxCoin = Long.MIN_VALUE
         var minFav = Long.MAX_VALUE; var maxFav = Long.MIN_VALUE
         var minClick = Long.MAX_VALUE; var maxClick = Long.MIN_VALUE
         var minDanmaku = Long.MAX_VALUE; var maxDanmaku = Long.MIN_VALUE
         var minReply = Long.MAX_VALUE; var maxReply = Long.MIN_VALUE
 
         for (v in videos) {
-            val stat = v.stat ?: continue
-            minCoin = minOf(minCoin, stat.coin ?: 0)
-            maxCoin = maxOf(maxCoin, stat.coin ?: 0)
-            minFav = minOf(minFav, stat.favorite ?: 0)
-            maxFav = maxOf(maxFav, stat.favorite ?: 0)
-            minClick = minOf(minClick, stat.view ?: 0)
-            maxClick = maxOf(maxClick, stat.view ?: 0)
-            minDanmaku = minOf(minDanmaku, stat.danmaku ?: 0)
-            maxDanmaku = maxOf(maxDanmaku, stat.danmaku ?: 0)
-            minReply = minOf(minReply, stat.reply ?: 0)
-            maxReply = maxOf(maxReply, stat.reply ?: 0)
+            val fav = v.favorites.toLongOrNull() ?: 0L
+            minFav = minOf(minFav, fav)
+            maxFav = maxOf(maxFav, fav)
+
+            val click = v.play.toLongOrNull() ?: 0L
+            minClick = minOf(minClick, click)
+            maxClick = maxOf(maxClick, click)
+
+            val danmaku = v.video_review.toLongOrNull() ?: 0L
+            minDanmaku = minOf(minDanmaku, danmaku)
+            maxDanmaku = maxOf(maxDanmaku, danmaku)
+
+            val reply = v.review.toLongOrNull() ?: 0L
+            minReply = minOf(minReply, reply)
+            maxReply = maxOf(maxReply, reply)
         }
 
-        val coinW = (weights["coin"] ?: 0) / 100f
-        val favW = (weights["favorite"] ?: 0) / 100f
-        val clickW = (weights["click"] ?: 0) / 100f
-        val danmakuW = (weights["danmaku"] ?: 0) / 100f
-        val replyW = (weights["reply"] ?: 0) / 100f
+        val coinW = 0f
+        val favW = (weights["favorite"] ?: 35) / 100f
+        val clickW = (weights["click"] ?: 15) / 100f
+        val danmakuW = (weights["danmaku"] ?: 5) / 100f
+        val replyW = (weights["reply"] ?: 5) / 100f
 
-        // 归一化 + 加权
         data class ScoredVideo(val video: RegionVideoInfo, val score: Float)
         val scored = videos.map { v ->
-            val stat = v.stat
-            val normCoin = if (maxCoin > minCoin)
-                ((stat?.coin ?: 0) - minCoin).toFloat() / (maxCoin - minCoin).toFloat() else 0f
-            val normFav = if (maxFav > minFav)
-                ((stat?.favorite ?: 0) - minFav).toFloat() / (maxFav - minFav).toFloat() else 0f
-            val normClick = if (maxClick > minClick)
-                ((stat?.view ?: 0) - minClick).toFloat() / (maxClick - minClick).toFloat() else 0f
-            val normDanmaku = if (maxDanmaku > minDanmaku)
-                ((stat?.danmaku ?: 0) - minDanmaku).toFloat() / (maxDanmaku - minDanmaku).toFloat() else 0f
-            val normReply = if (maxReply > minReply)
-                ((stat?.reply ?: 0) - minReply).toFloat() / (maxReply - minReply).toFloat() else 0f
+            val fav = v.favorites.toLongOrNull() ?: 0L
+            val click = v.play.toLongOrNull() ?: 0L
+            val danmaku = v.video_review.toLongOrNull() ?: 0L
+            val reply = v.review.toLongOrNull() ?: 0L
 
-            val score = normCoin * coinW + normFav * favW + normClick * clickW
+            val normFav = if (maxFav > minFav)
+                (fav - minFav).toFloat() / (maxFav - minFav).toFloat() else 0f
+            val normClick = if (maxClick > minClick)
+                (click - minClick).toFloat() / (maxClick - minClick).toFloat() else 0f
+            val normDanmaku = if (maxDanmaku > minDanmaku)
+                (danmaku - minDanmaku).toFloat() / (maxDanmaku - minDanmaku).toFloat() else 0f
+            val normReply = if (maxReply > minReply)
+                (reply - minReply).toFloat() / (maxReply - minReply).toFloat() else 0f
+
+            val score = normFav * favW + normClick * clickW
                     + normDanmaku * danmakuW + normReply * replyW
 
             ScoredVideo(v, score)
@@ -242,7 +252,6 @@ private class HomeTimeSelectContentViewModel(
         val minDuration = prefs[SettingPreferences.TimeSelectMinDuration] ?: 0
         val minPlayCount = prefs[SettingPreferences.TimeSelectMinPlayCount] ?: 0
 
-        // 计算时间范围
         val (timeFrom, timeTo) = when (timeMode) {
             SettingConstants.TIME_SELECT_TIME_MODE_ALL -> {
                 Pair("20090901", getTodayStr())
@@ -251,9 +260,13 @@ private class HomeTimeSelectContentViewModel(
                 val pastDays = prefs[SettingPreferences.TimeSelectPastDays]
                     ?: SettingConstants.TIME_SELECT_DEFAULT_PAST_DAYS
                 val excludeRecent = prefs[SettingPreferences.TimeSelectExcludeRecent] ?: 0
-                val to = getDateDaysAgo(excludeRecent)
-                val from = getDateDaysAgo(pastDays + excludeRecent)
-                Pair(from, to)
+                if (pastDays <= 0 && excludeRecent <= 0) {
+                    Pair("20090901", getTodayStr())
+                } else {
+                    val to = getDateDaysAgo(excludeRecent)
+                    val from = getDateDaysAgo(pastDays + excludeRecent)
+                    Pair(from, to)
+                }
             }
             SettingConstants.TIME_SELECT_TIME_MODE_CUSTOM -> {
                 val from = prefs[SettingPreferences.TimeSelectCustomFrom] ?: "20090901"
@@ -263,7 +276,6 @@ private class HomeTimeSelectContentViewModel(
             else -> Pair("20090901", getTodayStr())
         }
 
-        // 选区列表
         val regions = if (allRegions) {
             regionStore.state.regions
         } else {
@@ -281,7 +293,6 @@ private class HomeTimeSelectContentViewModel(
             pageSize = SettingConstants.TIME_SELECT_DEFAULT_PAGE_SIZE,
             minDuration = minDuration,
             minPlayCount = minPlayCount,
-            originalOnly = false,
         )
     }
 
@@ -310,6 +321,7 @@ internal fun HomeTimeSelectContent(
     val windowInsets = windowState.getContentInsets(localContainerView())
 
     val loadState by viewModel.loadState.collectAsState()
+    val isRefreshing by viewModel.isRefreshing.collectAsState()
 
     val emitter = localEmitter()
     LaunchedEffect(Unit) {
@@ -328,7 +340,7 @@ internal fun HomeTimeSelectContent(
                     .padding(windowInsets.toPaddingValues()),
                 contentAlignment = Alignment.Center,
             ) {
-                androidx.compose.material3.CircularProgressIndicator()
+                CircularProgressIndicator()
             }
         }
         is HomeTimeSelectContentViewModel.LoadState.Error -> {
@@ -344,16 +356,30 @@ internal fun HomeTimeSelectContent(
             }
         }
         is HomeTimeSelectContentViewModel.LoadState.Success -> {
-            LazyVerticalGrid(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(windowInsets.toPaddingValues()),
-                columns = GridCells.Adaptive(300.dp),
+            SwipeToRefresh(
+                refreshing = isRefreshing,
+                onRefresh = { viewModel.refresh() },
             ) {
-                items(state.videos, { it.aid }) { video ->
-                    VideoItemBox(
-                        videoInfo = video,
-                    )
+                LazyVerticalGrid(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(windowInsets.toPaddingValues()),
+                    columns = GridCells.Adaptive(300.dp),
+                ) {
+                    items(state.videos, { it.id }) { video ->
+                        VideoItemBox(
+                            modifier = Modifier.padding(
+                                horizontal = 10.dp,
+                                vertical = 5.dp
+                            ),
+                            title = video.title,
+                            pic = video.pic,
+                            upperName = video.author,
+                            playNum = video.play,
+                            damukuNum = video.video_review,
+                            duration = video.duration,
+                        )
+                    }
                 }
             }
         }

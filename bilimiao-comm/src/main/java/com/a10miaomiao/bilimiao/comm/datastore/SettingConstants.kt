@@ -82,7 +82,7 @@ object SettingConstants {
     const val TIME_SELECT_TIME_MODE_ALL = 0       // 全部时间
     const val TIME_SELECT_TIME_MODE_PAST = 1      // 只看过去
     const val TIME_SELECT_TIME_MODE_CUSTOM = 2    // 自定义范围
-    const val TIME_SELECT_DEFAULT_WEIGHTS = "coin:40,favorite:35,click:15,danmaku:5,reply:5"
+    const val TIME_SELECT_DEFAULT_WEIGHTS = "favorite:75,click:15,danmaku:5,reply:5"
     const val TIME_SELECT_DEFAULT_PAST_DAYS = 365
     const val TIME_SELECT_DEFAULT_EXCLUDE_RECENT = 0
     const val TIME_SELECT_DEFAULT_PAGES = 3
