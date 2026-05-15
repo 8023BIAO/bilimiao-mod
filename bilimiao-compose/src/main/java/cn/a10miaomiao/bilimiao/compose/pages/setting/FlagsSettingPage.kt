@@ -158,6 +158,7 @@ private fun FlagsSettingPageContent(
                     val tokenInfo = loginInfo?.token_info
                     val data = buildMap {
                         put("cookie", cookie)
+                        put("buvid", BilimiaoCommApp.commApp.getBilibiliBuvid())
                         if (tokenInfo != null) {
                             put("access_token", tokenInfo.access_token)
                             put("refresh_token", tokenInfo.refresh_token)
@@ -195,6 +196,13 @@ private fun FlagsSettingPageContent(
                     val accessToken = data["access_token"] ?: throw Exception("未找到access_token字段")
                     val refreshToken = data["refresh_token"] ?: throw Exception("未找到refresh_token字段")
                     val mid = data["mid"]?.toLongOrNull() ?: throw Exception("未找到mid字段")
+                    val buvid = data["buvid"] ?: ""
+
+                    // 保存设备指纹到 SharedPreferences
+                    if (buvid.isNotBlank()) {
+                        context.getSharedPreferences(BilimiaoCommApp.APP_NAME, Context.MODE_PRIVATE)
+                            .edit().putString("buvid", buvid).apply()
+                    }
 
                     val cookies = cookieStr.split(";").map { pair ->
                         val parts = pair.trim().split("=", limit = 2)

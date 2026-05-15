@@ -20,7 +20,7 @@ class RegionAPI {
     }
 
     /**
-     * 分区视频列表
+     * 分区视频列表（newlist_rank，已废弃，B站返回-10）
      */
     fun regionVideoList(
         rid: Int,
@@ -44,5 +44,15 @@ class RegionAPI {
             "time_to" to timeTo
         )
         url = "https://api.bilibili.com/x/web-interface/newlist_rank?" + ApiHelper.urlencode(params)
+    }
+
+    /**
+     * 分区排行榜视频列表（ranking/v2，替代已失效的newlist_rank）
+     * 每个分区返回约95个视频，含完整统计数据（包括coin）
+     */
+    fun regionVideoRanking(
+        rid: Int,
+    ) = MiaoHttp.request {
+        url = "https://api.bilibili.com/x/web-interface/ranking/v2?rid=${rid}&type=all"
     }
 }

@@ -36,10 +36,9 @@ class PlaybackService : Service() {
     override fun onCreate() {
         super.onCreate()
         instance = this
-        // Android 8+ 要求 startForegroundService 后5秒内必须调 startForeground
-        // 放在最前面防止 createNotificationChannel 抛异常或超时导致崩溃
-        startForegroundCompat(buildPlaceholderNotification())
+        // Android 15+ 必须先创建 NotificationChannel 再调 startForeground
         createNotificationChannel()
+        startForegroundCompat(buildPlaceholderNotification())
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {

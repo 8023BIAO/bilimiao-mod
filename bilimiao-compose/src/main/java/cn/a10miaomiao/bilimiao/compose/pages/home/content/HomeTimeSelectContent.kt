@@ -2,6 +2,7 @@ package cn.a10miaomiao.bilimiao.compose.pages.home.content
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -21,6 +22,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import cn.a10miaomiao.bilimiao.compose.common.constant.PageTabIds
 import cn.a10miaomiao.bilimiao.compose.common.diViewModel
+import cn.a10miaomiao.bilimiao.compose.common.entity.FlowPaginationInfo
 import cn.a10miaomiao.bilimiao.compose.common.emitter.EmitterAction
 import cn.a10miaomiao.bilimiao.compose.common.localContainerView
 import cn.a10miaomiao.bilimiao.compose.common.localEmitter
@@ -32,6 +34,8 @@ import cn.a10miaomiao.bilimiao.compose.pages.home.HomePageState
 import com.a10miaomiao.bilimiao.comm.datastore.SettingConstants
 import com.a10miaomiao.bilimiao.comm.datastore.SettingPreferences
 import com.a10miaomiao.bilimiao.comm.entity.ResultInfo
+import com.a10miaomiao.bilimiao.comm.entity.region.RankingV2Response
+import com.a10miaomiao.bilimiao.comm.entity.region.RankingV2VideoInfo
 import com.a10miaomiao.bilimiao.comm.entity.region.RegionInfo
 import com.a10miaomiao.bilimiao.comm.entity.region.RegionVideoInfo
 import com.a10miaomiao.bilimiao.comm.entity.region.RegionVideosRankInfo
@@ -59,13 +63,18 @@ private class HomeTimeSelectContentViewModel(
 
     val regionList = regionStore.state.regions
 
-    sealed class LoadState {
-        data object Loading : LoadState()
-        data class Success(val videos: List<RegionVideoInfo>) : LoadState()
-        data class Error(val msg: String) : LoadState()
+    fun toVideoDetail(video: RegionVideoInfo) {
+        pageNavigation.navigateToVideoInfo(video.id)
     }
 
-    val loadState = MutableStateFlow<LoadState>(LoadState.Loading)
+    /** 预读取配置（init 时加载一次） */
+    private var cachedConfig: TimeSelectConfig? = null
+
+    /** 待加载的分区索引 */
+    private var pendingRegionIndex = 0
+    private var pendingRegions: List<RegionInfo> = emptyList()
+
+    val list = FlowPaginationInfo<RegionVideoInfo>()
     val isRefreshing = MutableStateFlow(false)
 
     private data class TimeSelectConfig(
@@ -86,91 +95,115 @@ private class HomeTimeSelectContentViewModel(
     fun refresh() {
         if (isRefreshing.value) return
         isRefreshing.value = true
-        loadData(isRefresh = true)
+        list.reset()
+        pendingRegionIndex = 0
+        cachedConfig = null
+        loadData()
     }
 
-    private fun loadData(isRefresh: Boolean = false) = viewModelScope.launch(Dispatchers.IO) {
+    fun loadMore() {
+        if (!list.finished.value && !list.loading.value) {
+            loadNextRegion()
+        }
+    }
+
+    /** 初始加载：读配置 + 加载第一个分区 */
+    private fun loadData() = viewModelScope.launch(Dispatchers.IO) {
         try {
             val config = readConfig()
-            if (config.selectedRegions.isEmpty()) {
-                loadState.value = LoadState.Error("没有选择分区，请去设置中配置")
-                if (isRefresh) isRefreshing.value = false
+            cachedConfig = config
+            pendingRegions = config.selectedRegions
+            pendingRegionIndex = 0
+
+            if (pendingRegions.isEmpty()) {
+                list.fail.value = "没有选择分区，请去设置中配置"
+                isRefreshing.value = false
                 return@launch
             }
 
-            // 按权重最高的排序方式取数据
-            val primaryOrder = config.weights.maxByOrNull { it.value }?.key ?: "click"
+            // 只加载第一个分区，后续 loadMore 时逐分区加载
+            loadNextRegion(isFirst = true)
+        } catch (e: Exception) {
+            list.fail.value = "加载失败: ${e.message}"
+            isRefreshing.value = false
+        }
+    }
 
-            // 收集所有分区的视频
-            val allVideos = mutableListOf<Pair<RegionVideoInfo, Int>>() // video + regionId
-            for (region in config.selectedRegions) {
-                for (page in 1..config.pagesPerRegion) {
-                    try {
-                        val res = BiliApiService.regionAPI
-                            .regionVideoList(
-                                rid = region.tid,
-                                rankOrder = primaryOrder,
-                                pageNum = page,
-                                pageSize = config.pageSize,
-                                timeFrom = config.timeFrom,
-                                timeTo = config.timeTo,
-                            )
-                            .awaitCall()
-                            .json<ResultInfo<RegionVideosRankInfo>>()
-                        if (res.code == 0) {
-                            val result = res.data?.result
-                            if (result != null) {
-                                for (video in result) {
-                                    allVideos.add(video to region.tid)
-                                }
-                            }
-                        }
-                    } catch (e: Exception) {
-                        // 单个分区/单页失败不影响其他
+    /** 加载下一个分区（防爬虫：每次只请求一个分区） */
+    private fun loadNextRegion(isFirst: Boolean = false) = viewModelScope.launch(Dispatchers.IO) {
+        val config = cachedConfig ?: return@launch
+        val regions = pendingRegions
+        if (pendingRegionIndex >= regions.size) {
+            list.finished.value = true
+            isRefreshing.value = false
+            return@launch
+        }
+
+        list.loading.value = true
+        try {
+            val region = regions[pendingRegionIndex]
+            pendingRegionIndex++
+
+            val res = BiliApiService.regionAPI
+                .regionVideoRanking(rid = region.tid)
+                .awaitCall()
+                .json<ResultInfo<RankingV2Response>>()
+
+            if (res.code == 0) {
+                val videoList = res.data?.list ?: emptyList()
+                val timeFromLong = config.timeFrom.toLongOrNull() ?: 20090901L
+                val timeToLong = config.timeTo.toLongOrNull() ?: 99999999L
+
+                // 过滤 + 转换
+                val newVideos = videoList.filter { video ->
+                    val dateInt = pubdateToDateInt(video.pubdate)
+                    dateInt in timeFromLong..timeToLong
+                }.map { it.toRegionVideoInfo() }
+                .filter { video ->
+                    val passDuration = config.minDuration <= 0 ||
+                        (video.duration.toIntOrNull() ?: 0) >= config.minDuration
+                    val passPlayCount = config.minPlayCount <= 0 ||
+                        (video.play.toLongOrNull() ?: 0L) >= config.minPlayCount
+                    passDuration && passPlayCount
+                }
+
+                if (newVideos.isNotEmpty()) {
+                    // 去重后追加到列表，重新排序
+                    val existingIds = list.data.value.map { it.id }.toSet()
+                    val deduped = newVideos.filter { it.id !in existingIds }
+                    if (deduped.isNotEmpty()) {
+                        val merged = list.data.value.toMutableList()
+                        merged.addAll(deduped)
+                        list.data.value = scoreAndSort(merged, config.weights)
                     }
                 }
             }
 
-            // 去重（按 id）
-            val seen = mutableSetOf<String>()
-            val uniqueVideos = mutableListOf<RegionVideoInfo>()
-            for ((video, _) in allVideos) {
-                if (video.id !in seen) {
-                    seen.add(video.id)
-                    uniqueVideos.add(video)
-                }
+            // 如果最后一个分区或没更多了，标记完成
+            if (pendingRegionIndex >= regions.size) {
+                list.finished.value = true
             }
-
-            if (uniqueVideos.isEmpty()) {
-                loadState.value = LoadState.Error("没有找到符合条件的视频")
-                if (isRefresh) isRefreshing.value = false
-                return@launch
+            if (isFirst && list.data.value.isEmpty()) {
+                list.fail.value = if (pendingRegionIndex >= regions.size) "没有找到符合条件的视频" else "当前分区无数据，下拉加载更多"
             }
-
-            // 应用过滤
-            val filtered = uniqueVideos.filter { video ->
-                val passDuration = config.minDuration <= 0 ||
-                    (video.duration.toIntOrNull() ?: 0) >= config.minDuration
-                val passPlayCount = config.minPlayCount <= 0 ||
-                    (video.play.toLongOrNull() ?: 0L) >= config.minPlayCount
-                passDuration && passPlayCount
-            }
-
-            if (filtered.isEmpty()) {
-                loadState.value = LoadState.Error("过滤后没有符合条件的视频")
-                if (isRefresh) isRefreshing.value = false
-                return@launch
-            }
-
-            // 计算加权得分（先归一化）
-            val scored = scoreAndSort(filtered, config.weights)
-
-            loadState.value = LoadState.Success(scored)
         } catch (e: Exception) {
-            loadState.value = LoadState.Error("加载失败: ${e.message}")
+            if (isFirst && list.data.value.isEmpty()) {
+                list.fail.value = "加载失败: ${e.message}"
+            }
+            // 非首次失败不覆盖已有数据
         } finally {
-            if (isRefresh) isRefreshing.value = false
+            list.loading.value = false
+            isRefreshing.value = false
         }
+    }
+
+    /** Unix 时间戳秒 → YYYYMMDD Int */
+    private fun pubdateToDateInt(timestamp: Long): Long {
+        val cal = java.util.Calendar.getInstance()
+        cal.timeInMillis = timestamp * 1000
+        return (cal.get(java.util.Calendar.YEAR) * 10000L +
+                (cal.get(java.util.Calendar.MONTH) + 1) * 100L +
+                cal.get(java.util.Calendar.DAY_OF_MONTH)).toLong()
     }
 
     private fun scoreAndSort(
@@ -241,8 +274,6 @@ private class HomeTimeSelectContentViewModel(
             }
         }
 
-        val timeMode = prefs[SettingPreferences.TimeSelectTimeMode]
-            ?: SettingConstants.TIME_SELECT_TIME_MODE_ALL
         val weightsStr = prefs[SettingPreferences.TimeSelectWeights]
             ?: SettingConstants.TIME_SELECT_DEFAULT_WEIGHTS
         val allRegions = prefs[SettingPreferences.TimeSelectAllRegions] ?: true
@@ -252,28 +283,13 @@ private class HomeTimeSelectContentViewModel(
         val minDuration = prefs[SettingPreferences.TimeSelectMinDuration] ?: 0
         val minPlayCount = prefs[SettingPreferences.TimeSelectMinPlayCount] ?: 0
 
-        val (timeFrom, timeTo) = when (timeMode) {
-            SettingConstants.TIME_SELECT_TIME_MODE_ALL -> {
-                Pair("20090901", getTodayStr())
-            }
-            SettingConstants.TIME_SELECT_TIME_MODE_PAST -> {
-                val pastDays = prefs[SettingPreferences.TimeSelectPastDays]
-                    ?: SettingConstants.TIME_SELECT_DEFAULT_PAST_DAYS
-                val excludeRecent = prefs[SettingPreferences.TimeSelectExcludeRecent] ?: 0
-                if (pastDays <= 0 && excludeRecent <= 0) {
-                    Pair("20090901", getTodayStr())
-                } else {
-                    val to = getDateDaysAgo(excludeRecent)
-                    val from = getDateDaysAgo(pastDays + excludeRecent)
-                    Pair(from, to)
-                }
-            }
-            SettingConstants.TIME_SELECT_TIME_MODE_CUSTOM -> {
-                val from = prefs[SettingPreferences.TimeSelectCustomFrom] ?: "20090901"
-                val to = prefs[SettingPreferences.TimeSelectCustomTo] ?: getTodayStr()
-                Pair(from, to)
-            }
-            else -> Pair("20090901", getTodayStr())
+        // 优先使用自定义时间范围，否则默认全部时间
+        val customFrom = prefs[SettingPreferences.TimeSelectCustomFrom]
+        val customTo = prefs[SettingPreferences.TimeSelectCustomTo]
+        val (timeFrom, timeTo) = if (customFrom != null && customTo != null) {
+            Pair(customFrom, customTo)
+        } else {
+            Pair("20090901", getTodayStr())
         }
 
         val regions = if (allRegions) {
@@ -320,7 +336,10 @@ internal fun HomeTimeSelectContent(
     val windowState = windowStore.stateFlow.collectAsState().value
     val windowInsets = windowState.getContentInsets(localContainerView())
 
-    val loadState by viewModel.loadState.collectAsState()
+    val list by viewModel.list.data.collectAsState()
+    val listLoading by viewModel.list.loading.collectAsState()
+    val listFinished by viewModel.list.finished.collectAsState()
+    val listFail by viewModel.list.fail.collectAsState()
     val isRefreshing by viewModel.isRefreshing.collectAsState()
 
     val emitter = localEmitter()
@@ -332,53 +351,61 @@ internal fun HomeTimeSelectContent(
         }
     }
 
-    when (val state = loadState) {
-        is HomeTimeSelectContentViewModel.LoadState.Loading -> {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(windowInsets.toPaddingValues()),
-                contentAlignment = Alignment.Center,
-            ) {
-                CircularProgressIndicator()
+    SwipeToRefresh(
+        refreshing = isRefreshing,
+        onRefresh = { viewModel.refresh() },
+    ) {
+        LazyVerticalGrid(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(windowInsets.toPaddingValues()),
+            columns = GridCells.Adaptive(300.dp),
+        ) {
+            items(list, { it.id }) { video ->
+                VideoItemBox(
+                    modifier = Modifier.padding(
+                        horizontal = 10.dp,
+                        vertical = 5.dp
+                    ),
+                    title = video.title,
+                    pic = video.pic,
+                    upperName = video.author,
+                    playNum = video.play,
+                    damukuNum = video.video_review,
+                    duration = video.duration,
+                    onClick = {
+                        viewModel.toVideoDetail(video)
+                    }
+                )
             }
-        }
-        is HomeTimeSelectContentViewModel.LoadState.Error -> {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(windowInsets.toPaddingValues()),
-                contentAlignment = Alignment.Center,
+            item(
+                span = { androidx.compose.foundation.lazy.grid.GridItemSpan(this.maxLineSpan) }
             ) {
-                TextButton(onClick = { viewModel.refresh() }) {
-                    Text(state.msg)
+                // 居中的加载状态
+                if (listLoading) {
+                    Box(
+                        modifier = Modifier.fillMaxWidth(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator()
+                    }
                 }
-            }
-        }
-        is HomeTimeSelectContentViewModel.LoadState.Success -> {
-            SwipeToRefresh(
-                refreshing = isRefreshing,
-                onRefresh = { viewModel.refresh() },
-            ) {
-                LazyVerticalGrid(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(windowInsets.toPaddingValues()),
-                    columns = GridCells.Adaptive(300.dp),
-                ) {
-                    items(state.videos, { it.id }) { video ->
-                        VideoItemBox(
-                            modifier = Modifier.padding(
-                                horizontal = 10.dp,
-                                vertical = 5.dp
-                            ),
-                            title = video.title,
-                            pic = video.pic,
-                            upperName = video.author,
-                            playNum = video.play,
-                            damukuNum = video.video_review,
-                            duration = video.duration,
-                        )
+                if (listFail.isNotEmpty() && list.isEmpty()) {
+                    Box(
+                        modifier = Modifier.fillMaxWidth(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        TextButton(onClick = { viewModel.refresh() }) {
+                            Text(listFail)
+                        }
+                    }
+                }
+                if (!listLoading && listFail.isEmpty() && listFinished && list.isEmpty()) {
+                    Box(
+                        modifier = Modifier.fillMaxWidth(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("没有找到符合条件的视频")
                     }
                 }
             }

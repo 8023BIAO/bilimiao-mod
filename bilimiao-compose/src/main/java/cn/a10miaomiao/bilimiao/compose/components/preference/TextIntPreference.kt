@@ -29,7 +29,7 @@ fun LazyListScope.textIntPreference(
     enabled: () -> Boolean = { true },
     icon: @Composable (() -> Unit)? = null,
     summary: @Composable (() -> Unit)? = null,
-    label: String = "秒",
+    label: String = "",
 ) {
     item(key = key, contentType = "TextIntPreference") {
         val state = rememberState()
@@ -54,7 +54,7 @@ fun TextIntPreference(
     enabled: Boolean = true,
     icon: @Composable (() -> Unit)? = null,
     summary: @Composable (() -> Unit)? = null,
-    label: String = "秒",
+    label: String = "",
 ) {
     var value by state
     var showDialog by remember { mutableStateOf(false) }

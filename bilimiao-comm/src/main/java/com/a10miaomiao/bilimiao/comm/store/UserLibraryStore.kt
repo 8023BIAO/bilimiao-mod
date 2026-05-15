@@ -18,9 +18,11 @@ import com.a10miaomiao.bilimiao.comm.network.BiliGRPCHttp
 import com.a10miaomiao.bilimiao.comm.network.MiaoHttp.Companion.json
 import com.a10miaomiao.bilimiao.comm.store.base.BaseStore
 import com.a10miaomiao.bilimiao.comm.utils.miaoLogger
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.kodein.di.DI
 import org.kodein.di.instance
 
@@ -67,7 +69,7 @@ class UserLibraryStore (override val di: DI) :
 
     override fun init(context: Context) {
         val mid = userStore.state.info?.mid
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             loadHistoryData()
             if (mid != null) {
                 loadWatchLaterData()

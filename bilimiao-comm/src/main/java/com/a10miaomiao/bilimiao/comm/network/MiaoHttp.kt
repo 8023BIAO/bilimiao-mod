@@ -4,6 +4,7 @@ import android.webkit.CookieManager
 import com.a10miaomiao.bilimiao.comm.BilimiaoCommApp
 import com.a10miaomiao.bilimiao.comm.miao.MiaoJson
 import com.a10miaomiao.bilimiao.comm.utils.miaoLogger
+import com.a10miaomiao.bilimiao.comm.utils.WbiSigner
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.json.Json
@@ -39,6 +40,10 @@ class MiaoHttp(var url: String? = null) {
             requestBuilder.addHeader("app-key", "android_hd")
             BilimiaoCommApp.commApp.loginInfo?.token_info?.let{
                 requestBuilder.addHeader("x-bili-mid", it.mid.toString())
+            }
+            // Web API 自动加 WBI 签名
+            if (url?.let { "api.bilibili.com" in it && "app.bilibili.com" !in it } == true) {
+                url = WbiSigner.signUrlBlocking(url!!)
             }
         }
         val cookie = getCookie(url)

@@ -8,8 +8,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
@@ -88,13 +92,22 @@ private fun HomeSettingPageContent(
         SettingPreferences.run { context.dataStore }
     }
 
-    val showTimeSelect = remember {
-        kotlinx.coroutines.runBlocking {
-            SettingPreferences.run {
-                SettingPreferences.mapData(context) { prefs ->
-                    prefs[SettingPreferences.TimeSelectShow] ?: true
+    var showTimeSelect by remember {
+        mutableStateOf(
+            kotlinx.coroutines.runBlocking {
+                SettingPreferences.run {
+                    SettingPreferences.mapData(context) { prefs ->
+                        prefs[SettingPreferences.TimeSelectShow] ?: true
+                    }
                 }
             }
+        )
+    }
+
+    // 监听 DataStore 变化，即时更新 showTimeSelect
+    LaunchedEffect(dataStore) {
+        dataStore.data.collect { prefs ->
+            showTimeSelect = prefs[SettingPreferences.TimeSelectShow] ?: true
         }
     }
 
@@ -215,6 +228,7 @@ private fun HomeSettingPageContent(
                 summary = {
                     Text("过滤短视频")
                 },
+                label = "秒",
             )
             textIntPreference(
                 key = SettingPreferences.VideoMinPlayCount.name,
