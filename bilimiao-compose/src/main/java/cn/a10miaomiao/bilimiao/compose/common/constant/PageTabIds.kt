@@ -5,6 +5,7 @@ object PageTabIds {
     const val HomeTimeMachine = "home.time-machine"
     const val HomeRecommend = "home.recommend"
     const val HomePopular = "home.popular"
+    const val HomeTimeSelect = "home.time-select"
 
     const val DynamicAll = "dynamic.all"
     const val DynamicVideo = "dynamic.video"

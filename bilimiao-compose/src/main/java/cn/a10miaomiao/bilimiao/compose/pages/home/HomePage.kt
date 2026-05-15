@@ -48,6 +48,7 @@ import cn.a10miaomiao.bilimiao.compose.pages.dynamic.DynamicPage
 import cn.a10miaomiao.bilimiao.compose.pages.home.content.HomePopularContent
 import cn.a10miaomiao.bilimiao.compose.pages.home.content.HomeRecommendContent
 import cn.a10miaomiao.bilimiao.compose.pages.home.content.HomeTimeMachineContent
+import cn.a10miaomiao.bilimiao.compose.pages.home.content.HomeTimeSelectContent
 import com.a10miaomiao.bilimiao.comm.datastore.SettingConstants
 import com.a10miaomiao.bilimiao.comm.delegate.player.BasePlayerDelegate
 import com.a10miaomiao.bilimiao.comm.mypage.MenuActions
@@ -108,6 +109,17 @@ private sealed class HomePageTab(
             HomePopularContent()
         }
     }
+
+    data object TimeSelect :
+            HomePageTab(
+                    id = PageTabIds.HomeTimeSelect,
+                    name = "时光精选",
+            ) {
+        @Composable
+        override fun PageContent(pageState: HomePageState) {
+            HomeTimeSelectContent(pageState)
+        }
+    }
 }
 
 private class HomePageViewModel(
@@ -145,6 +157,12 @@ private class HomePageViewModel(
         if (setting.showTimeMachine) {
             tabs.add(HomePageTab.TimeMachine)
             if (entryView == SettingConstants.HOME_ENTRY_VIEW_DEFAULT) {
+                initialPage = tabs.size - 1
+            }
+        }
+        if (setting.showTimeSelect) {
+            tabs.add(HomePageTab.TimeSelect)
+            if (entryView == SettingConstants.HOME_ENTRY_VIEW_TIME_SELECT) {
                 initialPage = tabs.size - 1
             }
         }

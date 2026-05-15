@@ -34,6 +34,7 @@ class AppStore(override val di: DI) :
         val showTimeMachine: Boolean = true,
         val showPopular: Boolean = true,
         val showRecommend: Boolean = true,
+        val showTimeSelect: Boolean = true,
         val entryView: Int = SettingConstants.HOME_ENTRY_VIEW_DEFAULT,
     )
 
@@ -62,6 +63,7 @@ class AppStore(override val di: DI) :
                         showTimeMachine = it[HomeTimeMachineShow] ?: true,
                         showPopular = it[HomePopularShow] ?: true,
                         showRecommend = it[HomeRecommendShow] ?: true,
+                        showTimeSelect = it[TimeSelectShow] ?: true,
                         entryView = it[HomeEntryView] ?: SettingConstants.HOME_ENTRY_VIEW_DEFAULT
                     )
                     theme = ThemeSettingState(

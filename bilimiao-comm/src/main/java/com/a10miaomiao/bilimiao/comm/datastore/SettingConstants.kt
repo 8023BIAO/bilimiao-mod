@@ -77,4 +77,15 @@ object SettingConstants {
     // 视频最小播放量过滤默认值(个)，0表示不过滤
     const val VIDEO_MIN_PLAY_COUNT_DEFAULT = 0
 
+    // ===== 时光精选 =====
+    const val HOME_ENTRY_VIEW_TIME_SELECT = 4 // 时光精选
+    const val TIME_SELECT_TIME_MODE_ALL = 0       // 全部时间
+    const val TIME_SELECT_TIME_MODE_PAST = 1      // 只看过去
+    const val TIME_SELECT_TIME_MODE_CUSTOM = 2    // 自定义范围
+    const val TIME_SELECT_DEFAULT_WEIGHTS = "coin:40,favorite:35,click:15,danmaku:5,reply:5"
+    const val TIME_SELECT_DEFAULT_PAST_DAYS = 365
+    const val TIME_SELECT_DEFAULT_EXCLUDE_RECENT = 0
+    const val TIME_SELECT_DEFAULT_PAGES = 3
+    const val TIME_SELECT_DEFAULT_PAGE_SIZE = 20
+
 }

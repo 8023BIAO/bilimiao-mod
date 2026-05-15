@@ -86,6 +86,22 @@ object SettingPreferences {
     // 隐藏视频详情页相关推荐
     val VideoHideRelates = booleanPreferencesKey("video_hide_relates")
 
+    // ===== 时光精选 =====
+    val TimeSelectShow = booleanPreferencesKey("time_select_show")
+    val TimeSelectTimeMode = intPreferencesKey("time_select_time_mode")
+    val TimeSelectPastDays = intPreferencesKey("time_select_past_days")
+    val TimeSelectExcludeRecent = intPreferencesKey("time_select_exclude_recent")
+    val TimeSelectCustomFrom = stringPreferencesKey("time_select_custom_from")
+    val TimeSelectCustomTo = stringPreferencesKey("time_select_custom_to")
+    val TimeSelectWeights = stringPreferencesKey("time_select_weights")
+    val TimeSelectSelectedRegions = stringSetPreferencesKey("time_select_regions")
+    val TimeSelectAllRegions = booleanPreferencesKey("time_select_all_regions")
+    val TimeSelectPagesPerRegion = intPreferencesKey("time_select_pages_per_region")
+    val TimeSelectPageSize = intPreferencesKey("time_select_page_size")
+    val TimeSelectMinDuration = intPreferencesKey("time_select_min_duration")
+    val TimeSelectMinPlayCount = intPreferencesKey("time_select_min_play_count")
+    val TimeSelectOriginalOnly = booleanPreferencesKey("time_select_original_only")
+
     /**
      * Theme
      */

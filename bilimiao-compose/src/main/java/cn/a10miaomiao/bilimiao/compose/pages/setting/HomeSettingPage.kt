@@ -21,6 +21,7 @@ import cn.a10miaomiao.bilimiao.compose.base.ComposePage
 import cn.a10miaomiao.bilimiao.compose.common.diViewModel
 import cn.a10miaomiao.bilimiao.compose.common.localContainerView
 import cn.a10miaomiao.bilimiao.compose.common.mypage.PageConfig
+import cn.a10miaomiao.bilimiao.compose.common.navigation.PageNavigation
 import cn.a10miaomiao.bilimiao.compose.common.preference.rememberPreferenceFlow
 import cn.a10miaomiao.bilimiao.compose.components.preference.listStylePreference
 import cn.a10miaomiao.bilimiao.compose.components.preference.textIntPreference
@@ -31,6 +32,7 @@ import kotlinx.serialization.Serializable
 import me.zhanghai.compose.preference.ListPreferenceType
 import me.zhanghai.compose.preference.ProvidePreferenceLocals
 import me.zhanghai.compose.preference.listPreference
+import me.zhanghai.compose.preference.preference
 import me.zhanghai.compose.preference.preferenceCategory
 import me.zhanghai.compose.preference.switchPreference
 import org.kodein.di.DI
@@ -53,13 +55,19 @@ private class HomeSettingPageViewModel(
 ) : ViewModel(), DIAware {
 
     private val fragment by instance<Fragment>()
+    private val pageNavigation by instance<PageNavigation>()
 
     val entryViews = mapOf(
         SettingConstants.HOME_ENTRY_VIEW_DEFAULT to "默认",
         SettingConstants.HOME_ENTRY_VIEW_RECOMMEND to "推荐",
         SettingConstants.HOME_ENTRY_VIEW_POPULAR to "热门",
         SettingConstants.HOME_ENTRY_VIEW_DYNAMIC to "动态",
+        SettingConstants.HOME_ENTRY_VIEW_TIME_SELECT to "时光精选",
     )
+
+    fun toTimeSelectSettingPage() {
+        pageNavigation.navigate(TimeSelectSettingPage)
+    }
 
 }
 
@@ -138,6 +146,13 @@ private fun HomeSettingPageContent(
                     Text("显示热门")
                 },
                 defaultValue = true,
+            )
+
+            preference(
+                key = "time_select",
+                title = { Text("时光精选设置") },
+                summary = { Text("自定义精选高质量旧视频的算法") },
+                onClick = viewModel::toTimeSelectSettingPage,
             )
 
             preferenceCategory(
