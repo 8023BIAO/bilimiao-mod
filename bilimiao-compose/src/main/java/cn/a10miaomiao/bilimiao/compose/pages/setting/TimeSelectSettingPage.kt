@@ -34,6 +34,7 @@ import com.a10miaomiao.bilimiao.comm.store.RegionStore
 import com.a10miaomiao.bilimiao.comm.store.TimeSettingStore
 import com.a10miaomiao.bilimiao.comm.utils.TimeSelectUtil
 import com.a10miaomiao.bilimiao.store.WindowStore
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Serializable
@@ -85,12 +86,13 @@ private fun TimeSelectSettingPageContent() {
 
     // 选中的分区（从 DataStore 读）
     var selectedRegionIds by remember {
-        mutableStateOf(
+        mutableStateOf<Set<Int>>(
             runBlocking {
-                SettingPreferences.run {
-                    SettingPreferences.mapData(context) { prefs ->
-                        prefs[SettingPreferences.TimeSelectSelectedRegions] ?: emptySet()
-                    }
+                SettingPreferences.mapData(context) { prefs ->
+                    prefs[SettingPreferences.TimeSelectSelectedRegions]
+                        ?.mapNotNull { it.toIntOrNull() }
+                        ?.toSet()
+                        ?: emptySet()
                 }
             }
         )
@@ -114,12 +116,24 @@ private fun TimeSelectSettingPageContent() {
             }
             // Update display
             timeDisplay = "${from.substring(0,4)}-${from.substring(4,6)}-${from.substring(6)} ~ ${to.substring(0,4)}-${to.substring(4,6)}-${to.substring(6)}"
+            // 刷新已选分区数量
+            selectedRegionIds = SettingPreferences.mapData(context) { prefs ->
+                prefs[SettingPreferences.TimeSelectSelectedRegions]
+                    ?.mapNotNull { it.toIntOrNull() }
+                    ?.toSet()
+                    ?: emptySet()
+            }
+            selectedRegionCount = selectedRegionIds.size
         }
     }
 
     ProvidePreferenceLocals(
         flow = rememberPreferenceFlow(dataStore)
     ) {
+        val allRegionsFlow = remember(dataStore) {
+            dataStore.data.map { it[SettingPreferences.TimeSelectAllRegions] ?: true }
+        }
+        val allRegionsValue by allRegionsFlow.collectAsState(initial = true)
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
@@ -184,6 +198,20 @@ private fun TimeSelectSettingPageContent() {
                 title = { Text("全部分区") },
                 summary = { Text(if (it) "遍历所有分区" else "手动选择分区") },
             )
+            // 非全部分区模式时显示"选择分区"按钮
+            if (!allRegionsValue) {
+                preference(
+                    key = "select_regions",
+                    title = { Text("选择分区") },
+                    summary = {
+                        val count = selectedRegionIds.size
+                        Text(if (count > 0) "已选 $count 个分区" else "点击选择分区")
+                    },
+                    onClick = {
+                        bottomSheetState.open(RegionSelectPage())
+                    },
+                )
+            }
 
             // ========== 过滤 ==========
             preferenceCategory(
