@@ -6,15 +6,19 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -120,6 +124,7 @@ private class HomeTimeSelectContentViewModel(
             cachedConfig = config
             pendingRegions = config.selectedRegions
             pendingRegionIndex = 0
+            android.util.Log.d("TimeSelect", "regions=${pendingRegions.size} first=${pendingRegions.firstOrNull()?.tid} timeFrom=${config.timeFrom} timeTo=${config.timeTo}")
 
             if (pendingRegions.isEmpty()) {
                 list.fail.value = "没有选择分区，请去设置中配置"
@@ -360,11 +365,26 @@ internal fun HomeTimeSelectContent(
         refreshing = isRefreshing,
         onRefresh = { viewModel.refresh() },
     ) {
+        val gridState = rememberLazyGridState()
+        // 滚动到底部时自动加载更多
+        val shouldLoadMore by remember {
+            derivedStateOf {
+                val lastVisibleItem = gridState.layoutInfo.visibleItemsInfo.lastOrNull()
+                    ?: return@derivedStateOf false
+                lastVisibleItem.index >= gridState.layoutInfo.totalItemsCount - 3
+            }
+        }
+        LaunchedEffect(shouldLoadMore) {
+            if (shouldLoadMore && !listLoading && !listFinished) {
+                viewModel.loadMore()
+            }
+        }
         LazyVerticalGrid(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(windowInsets.toPaddingValues()),
             columns = GridCells.Adaptive(300.dp),
+            state = gridState,
         ) {
             items(list, { it.id }) { video ->
                 VideoItemBox(

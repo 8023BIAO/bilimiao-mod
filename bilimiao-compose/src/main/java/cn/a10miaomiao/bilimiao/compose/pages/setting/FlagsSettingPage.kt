@@ -46,6 +46,8 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.intOrNull
 import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import me.zhanghai.compose.preference.ProvidePreferenceLocals
 import me.zhanghai.compose.preference.preference
 import me.zhanghai.compose.preference.preferenceCategory
@@ -162,17 +164,21 @@ private fun FlagsSettingPageContent(
                     val cookie = cookieManager.getCookie("https://bilibili.com") ?: ""
                     val loginInfo = BilimiaoCommApp.commApp.loginInfo
                     val tokenInfo = loginInfo?.token_info
-                    val data = buildMap {
-                        put("cookie", cookie)
-                        put("buvid", BilimiaoCommApp.commApp.getBilibiliBuvid())
-                        put("wbi", WbiSigner.getWbiCache())
+                    val data = buildJsonObject {
+                        put("cookie", JsonPrimitive(cookie))
+                        put("buvid", JsonPrimitive(BilimiaoCommApp.commApp.getBilibiliBuvid()))
+                        val wbiCache = WbiSigner.getWbiCache()
+                        put("wbi", buildJsonObject {
+                            wbiCache["mix_key"]?.let { put("mix_key", JsonPrimitive(it.toString())) }
+                            wbiCache["last_fetch_day"]?.let { put("last_fetch_day", JsonPrimitive(it as Int)) }
+                        })
                         if (tokenInfo != null) {
-                            put("access_token", tokenInfo.access_token)
-                            put("refresh_token", tokenInfo.refresh_token)
-                            put("mid", tokenInfo.mid.toString())
+                            put("access_token", JsonPrimitive(tokenInfo.access_token))
+                            put("refresh_token", JsonPrimitive(tokenInfo.refresh_token))
+                            put("mid", JsonPrimitive(tokenInfo.mid.toString()))
                         }
                     }
-                    val jsonStr = MiaoJson.toJson(data)
+                    val jsonStr = data.toString()
                     withContext(Dispatchers.IO) {
                         context.contentResolver.openOutputStream(uri)?.use { out ->
                             out.write(jsonStr.toByteArray(Charsets.UTF_8))
