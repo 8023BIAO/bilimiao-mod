@@ -53,6 +53,7 @@ import cn.a10miaomiao.bilimiao.compose.pages.setting.FlagsSettingPage
 import cn.a10miaomiao.bilimiao.compose.pages.setting.ErrorLogPage
 import cn.a10miaomiao.bilimiao.compose.pages.setting.HomeSettingPage
 import cn.a10miaomiao.bilimiao.compose.pages.setting.TimeSelectSettingPage
+import cn.a10miaomiao.bilimiao.compose.pages.setting.RegionSelectPage
 import cn.a10miaomiao.bilimiao.compose.pages.setting.SettingPage
 import cn.a10miaomiao.bilimiao.compose.pages.setting.AutoStopTimerPage
 import cn.a10miaomiao.bilimiao.compose.pages.setting.ExportSettingPage
@@ -196,6 +197,7 @@ class BilimiaoPageRoute (
         )
         composable<HomeSettingPage>()
         composable<TimeSelectSettingPage>()
+        composable<RegionSelectPage>()
         composable<ThemeSettingPage>()
         composable<VideoSettingPage>()
         composable<AutoStopTimerPage>()
