@@ -103,7 +103,7 @@ private class WebPageViewModel(
             }
             userAgentString = "$defaultUserAgentString $userAgent"
             allowContentAccess = true
-            allowFileAccess = true
+            allowFileAccess = false
             cacheMode = WebSettings.LOAD_DEFAULT
             databaseEnabled = true
             domStorageEnabled = true

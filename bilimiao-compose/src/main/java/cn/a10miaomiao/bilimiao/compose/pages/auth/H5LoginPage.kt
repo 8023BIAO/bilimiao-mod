@@ -128,7 +128,7 @@ private class H5LoginPageViewModel(
             }
             userAgentString = defaultUserAgentString
             allowContentAccess = true
-            allowFileAccess = true
+            allowFileAccess = false
             cacheMode = WebSettings.LOAD_DEFAULT
             databaseEnabled = true
             domStorageEnabled = true
