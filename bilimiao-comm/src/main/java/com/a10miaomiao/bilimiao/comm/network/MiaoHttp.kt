@@ -41,8 +41,8 @@ class MiaoHttp(var url: String? = null) {
             BilimiaoCommApp.commApp.loginInfo?.token_info?.let{
                 requestBuilder.addHeader("x-bili-mid", it.mid.toString())
             }
-            // Web API 自动加 WBI 签名
-            if (url?.let { "api.bilibili.com" in it && "app.bilibili.com" !in it } == true) {
+            // Web API 自动加 WBI 签名（nav 端点排除，避免获取签名 key 时死循环）
+            if (url?.let { "api.bilibili.com" in it && "/x/web-interface/nav" !in it } == true) {
                 url = WbiSigner.signUrlBlocking(url!!)
             }
         }
