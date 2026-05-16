@@ -193,6 +193,14 @@ private class HomeTimeSelectContentViewModel(
                 }
             }
 
+            // 如果还有更多分区且当前没拿到数据，自动加载下一个
+            if (pendingRegionIndex < regions.size && list.data.value.isEmpty()) {
+                android.util.Log.d("TimeSelect", "rid=${region.tid} empty, auto-advancing to next region")
+                list.loading.value = false
+                loadNextRegion(isFirst = pendingRegionIndex <= 1) // 前两个分区都算"首批"
+                return@launch
+            }
+
             // 如果最后一个分区或没更多了，标记完成
             if (pendingRegionIndex >= regions.size) {
                 list.finished.value = true
@@ -201,10 +209,16 @@ private class HomeTimeSelectContentViewModel(
                 list.fail.value = if (pendingRegionIndex >= regions.size) "没有找到符合条件的视频" else "当前分区无数据，下拉加载更多"
             }
         } catch (e: Exception) {
+            // 失败也自动跳过
+            android.util.Log.e("TimeSelect", "rid=${regions.getOrNull(pendingRegionIndex-1)?.tid} failed: ${e.message}")
+            if (pendingRegionIndex < regions.size) {
+                list.loading.value = false
+                loadNextRegion(isFirst = pendingRegionIndex <= 1)
+                return@launch
+            }
             if (isFirst && list.data.value.isEmpty()) {
                 list.fail.value = "加载失败: ${e.message}"
             }
-            // 非首次失败不覆盖已有数据
         } finally {
             list.loading.value = false
             isRefreshing.value = false
