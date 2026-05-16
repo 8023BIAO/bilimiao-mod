@@ -196,8 +196,9 @@ class BilimiaoPageRoute (
             )
         )
         composable<HomeSettingPage>()
-        composable<TimeSelectSettingPage>()
-        composable<RegionSelectPage>()
+        // ====== 时光精选已禁用 ======
+        // composable<TimeSelectSettingPage>()
+        // composable<RegionSelectPage>()
         composable<ThemeSettingPage>()
         composable<VideoSettingPage>()
         composable<AutoStopTimerPage>()

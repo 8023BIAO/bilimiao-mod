@@ -66,12 +66,14 @@ private class HomeSettingPageViewModel(
         SettingConstants.HOME_ENTRY_VIEW_RECOMMEND to "推荐",
         SettingConstants.HOME_ENTRY_VIEW_POPULAR to "热门",
         SettingConstants.HOME_ENTRY_VIEW_DYNAMIC to "动态",
-        SettingConstants.HOME_ENTRY_VIEW_TIME_SELECT to "时光精选",
+        // ====== 时光精选已禁用 ======
+        // SettingConstants.HOME_ENTRY_VIEW_TIME_SELECT to "时光精选",
     )
-
-    fun toTimeSelectSettingPage() {
-        pageNavigation.navigate(TimeSelectSettingPage)
-    }
+    
+    // ====== 时光精选已禁用 ======
+    // fun toTimeSelectSettingPage() {
+    //     pageNavigation.navigate(TimeSelectSettingPage)
+    // }
 
 }
 
@@ -92,30 +94,25 @@ private fun HomeSettingPageContent(
         SettingPreferences.run { context.dataStore }
     }
 
-    var showTimeSelect by remember {
-        mutableStateOf(
-            kotlinx.coroutines.runBlocking {
-                SettingPreferences.run {
-                    SettingPreferences.mapData(context) { prefs ->
-                        prefs[SettingPreferences.TimeSelectShow] ?: true
-                    }
-                }
-            }
-        )
-    }
+    // ====== 时光精选已禁用 ======
+    // var showTimeSelect by remember {
+    //     mutableStateOf(
+    //         kotlinx.coroutines.runBlocking {
+    //             SettingPreferences.run {
+    //                 SettingPreferences.mapData(context) { prefs ->
+    //                     prefs[SettingPreferences.TimeSelectShow] ?: true
+    //                 }
+    //             }
+    //         }
+    //     )
+    // }
+    // LaunchedEffect(dataStore) {
+    //     dataStore.data.collect { prefs ->
+    //         showTimeSelect = prefs[SettingPreferences.TimeSelectShow] ?: true
+    //     }
+    // }
 
-    // 监听 DataStore 变化，即时更新 showTimeSelect
-    LaunchedEffect(dataStore) {
-        dataStore.data.collect { prefs ->
-            showTimeSelect = prefs[SettingPreferences.TimeSelectShow] ?: true
-        }
-    }
-
-    val entryViewValues = if (showTimeSelect) {
-        viewModel.entryViews.keys.toList()
-    } else {
-        viewModel.entryViews.keys.toList() - SettingConstants.HOME_ENTRY_VIEW_TIME_SELECT
-    }
+    val entryViewValues = viewModel.entryViews.keys.toList()
 
     ProvidePreferenceLocals(
         flow = rememberPreferenceFlow(dataStore)
@@ -162,13 +159,14 @@ private fun HomeSettingPageContent(
                 },
                 defaultValue = true,
             )
-            switchPreference(
-                key = SettingPreferences.TimeSelectShow.name,
-                title = {
-                    Text("显示时光精选")
-                },
-                defaultValue = true,
-            )
+            // ====== 时光精选已禁用 ======
+            // switchPreference(
+            //     key = SettingPreferences.TimeSelectShow.name,
+            //     title = {
+            //         Text("显示时光精选")
+            //     },
+            //     defaultValue = true,
+            // )
             switchPreference(
                 key = SettingPreferences.HomeRecommendShow.name,
                 title = {
@@ -184,13 +182,14 @@ private fun HomeSettingPageContent(
                 defaultValue = true,
             )
 
-            preference(
-                key = "time_select",
-                title = { Text("时光精选设置") },
-                summary = { Text("自定义精选高质量旧视频的算法") },
-                enabled = showTimeSelect,
-                onClick = if (showTimeSelect) viewModel::toTimeSelectSettingPage else null,
-            )
+            // ====== 时光精选已禁用 ======
+            // preference(
+            //     key = "time_select",
+            //     title = { Text("时光精选设置") },
+            //     summary = { Text("自定义精选高质量旧视频的算法") },
+            //     enabled = showTimeSelect,
+            //     onClick = if (showTimeSelect) viewModel::toTimeSelectSettingPage else null,
+            // )
 
             preferenceCategory(
                 key = "popular",

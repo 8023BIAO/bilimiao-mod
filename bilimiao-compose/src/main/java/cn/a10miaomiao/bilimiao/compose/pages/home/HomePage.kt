@@ -110,16 +110,17 @@ private sealed class HomePageTab(
         }
     }
 
-    data object TimeSelect :
-            HomePageTab(
-                    id = PageTabIds.HomeTimeSelect,
-                    name = "时光精选",
-            ) {
-        @Composable
-        override fun PageContent(pageState: HomePageState) {
-            HomeTimeSelectContent(pageState)
-        }
-    }
+    // ====== 时光精选已禁用 ======
+    // data object TimeSelect :
+    //         HomePageTab(
+    //                 id = PageTabIds.HomeTimeSelect,
+    //                 name = "时光精选",
+    //         ) {
+    //     @Composable
+    //     override fun PageContent(pageState: HomePageState) {
+    //         HomeTimeSelectContent(pageState)
+    //     }
+    // }
 }
 
 private class HomePageViewModel(
@@ -160,12 +161,13 @@ private class HomePageViewModel(
                 initialPage = tabs.size - 1
             }
         }
-        if (setting.showTimeSelect) {
-            tabs.add(HomePageTab.TimeSelect)
-            if (entryView == SettingConstants.HOME_ENTRY_VIEW_TIME_SELECT) {
-                initialPage = tabs.size - 1
-            }
-        }
+        // ====== 时光精选已禁用 ======
+        // if (setting.showTimeSelect) {
+        //     tabs.add(HomePageTab.TimeSelect)
+        //     if (entryView == SettingConstants.HOME_ENTRY_VIEW_TIME_SELECT) {
+        //         initialPage = tabs.size - 1
+        //     }
+        // }
         if (setting.showRecommend) {
             tabs.add(HomePageTab.Recommend)
             if (entryView == SettingConstants.HOME_ENTRY_VIEW_RECOMMEND) {
