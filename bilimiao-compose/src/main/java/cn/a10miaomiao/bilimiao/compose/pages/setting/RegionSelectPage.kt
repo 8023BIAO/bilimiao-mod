@@ -98,15 +98,7 @@ class RegionSelectPage : ComposePage() {
                         onClick = { toggleRegion(region.tid) }
                     ) {
                         val isRegionSelected = region.tid in selected
-                        FlowRow(
-                            modifier = Modifier
-                                .background(
-                                    if (isRegionSelected) MaterialTheme.colorScheme.primaryContainer
-                                    else MaterialTheme.colorScheme.surfaceVariant,
-                                    RoundedCornerShape(8.dp)
-                                )
-                                .padding(4.dp)
-                        ) {
+                        FlowRow {
                             region.children?.forEach { child ->
                                 val isChildSelected = child.tid in selected
                                 AssistChip(

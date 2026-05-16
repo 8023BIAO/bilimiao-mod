@@ -10,8 +10,10 @@ import com.a10miaomiao.bilimiao.comm.network.MiaoHttp
 import com.a10miaomiao.bilimiao.comm.utils.AESUtil
 import com.a10miaomiao.bilimiao.comm.utils.MiaoEncryptDecrypt
 import com.a10miaomiao.bilimiao.comm.utils.ErrorLogCollector
+import com.a10miaomiao.bilimiao.comm.datastore.SettingPreferences
 import com.kongzue.dialogx.DialogX
 import com.kongzue.dialogxmaterialyou.style.MaterialYouStyle
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.encodeToString
 import java.io.File
 
@@ -34,6 +36,16 @@ class BilimiaoCommApp(
     fun onCreate() {
         commApp = this
         readAuthInfo()
+        // 同步 WBI 签名开关
+        try {
+            MiaoHttp.isWbiEnabled = runBlocking {
+                SettingPreferences.run {
+                    SettingPreferences.mapData(app) { prefs ->
+                        prefs[SettingPreferences.WbiSignEnabled] ?: true
+                    }
+                }
+            }
+        } catch (_: Exception) {}
         ErrorLogCollector.init(app)
 
         DialogX.init(app)

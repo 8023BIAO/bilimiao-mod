@@ -23,6 +23,18 @@ object WbiSigner {
     private var mixKey: String? = null
     private var lastFetchDay: Int = -1
 
+    /** 导出 WBI 缓存数据 */
+    fun getWbiCache(): Map<String, Any?> = mapOf(
+        "mix_key" to mixKey,
+        "last_fetch_day" to lastFetchDay,
+    )
+
+    /** 恢复 WBI 缓存数据 */
+    fun restoreWbiCache(data: Map<String, Any?>) {
+        mixKey = data["mix_key"] as? String
+        lastFetchDay = (data["last_fetch_day"] as? Number)?.toInt() ?: -1
+    }
+
     private val REGEX_FILTER = Regex("[!'()*]")
 
     /** 获取 mix_key（每天刷新一次） */

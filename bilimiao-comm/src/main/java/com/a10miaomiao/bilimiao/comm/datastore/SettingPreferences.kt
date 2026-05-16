@@ -114,6 +114,9 @@ object SettingPreferences {
     //
     val ThemeAppBarType = intPreferencesKey("theme_app_bar_type")
 
+    /** WBI 签名开关（实验性） */
+    val WbiSignEnabled = booleanPreferencesKey("wbi_sign_enabled")
+
     /**
      * Player
      */

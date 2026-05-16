@@ -34,6 +34,7 @@ import com.a10miaomiao.bilimiao.comm.datastore.SettingPreferences
 import com.a10miaomiao.bilimiao.comm.datastore.SettingsExporter
 import com.a10miaomiao.bilimiao.comm.entity.auth.LoginInfo
 import com.a10miaomiao.bilimiao.comm.miao.MiaoJson
+import com.a10miaomiao.bilimiao.comm.utils.WbiSigner
 import com.a10miaomiao.bilimiao.store.WindowStore
 import com.a10miaomiao.bilimiao.comm.store.UserStore
 import kotlinx.coroutines.Dispatchers
@@ -159,6 +160,7 @@ private fun FlagsSettingPageContent(
                     val data = buildMap {
                         put("cookie", cookie)
                         put("buvid", BilimiaoCommApp.commApp.getBilibiliBuvid())
+                        put("wbi", WbiSigner.getWbiCache())
                         if (tokenInfo != null) {
                             put("access_token", tokenInfo.access_token)
                             put("refresh_token", tokenInfo.refresh_token)
@@ -191,12 +193,19 @@ private fun FlagsSettingPageContent(
                             BufferedReader(InputStreamReader(input, Charsets.UTF_8)).readText()
                         } ?: throw Exception("无法读取文件")
                     }
-                    val data = MiaoJson.fromJson<Map<String, String>>(jsonStr)
-                    val cookieStr = data["cookie"] ?: throw Exception("未找到cookie字段")
-                    val accessToken = data["access_token"] ?: throw Exception("未找到access_token字段")
-                    val refreshToken = data["refresh_token"] ?: throw Exception("未找到refresh_token字段")
-                    val mid = data["mid"]?.toLongOrNull() ?: throw Exception("未找到mid字段")
-                    val buvid = data["buvid"] ?: ""
+                    val data = MiaoJson.fromJson<Map<String, Any?>>(jsonStr) as Map<String, Any?>
+                    val cookieStr = data["cookie"] as? String ?: throw Exception("未找到cookie字段")
+                    val accessToken = data["access_token"] as? String ?: throw Exception("未找到access_token字段")
+                    val refreshToken = data["refresh_token"] as? String ?: throw Exception("未找到refresh_token字段")
+                    val midStr = data["mid"] as? String ?: throw Exception("未找到mid字段")
+                    val mid = midStr.toLongOrNull() ?: throw Exception("mid格式错误")
+                    val buvid = data["buvid"] as? String ?: ""
+
+                    // 恢复 WBI 缓存
+                    (data["wbi"] as? Map<*, *>)?.let { wbiData ->
+                        @Suppress("UNCHECKED_CAST")
+                        WbiSigner.restoreWbiCache(wbiData as Map<String, Any?>)
+                    }
 
                     // 保存设备指纹到 SharedPreferences
                     if (buvid.isNotBlank()) {
@@ -399,6 +408,18 @@ private fun FlagsSettingPageContent(
                         )
                     }
                 }
+
+            // ===== 网络 =====
+            preferenceCategory(
+                key = "network",
+                title = { Text("网络测试") }
+            )
+            switchPreference(
+                key = SettingPreferences.WbiSignEnabled.name,
+                defaultValue = true,
+                title = { Text("WBI 签名") },
+                summary = { Text("对 B站 Web API 自动添加 WBI 签名（-352 时关闭重试）") },
+            )
 
             preferenceCategory(
                 key = "behavior",
