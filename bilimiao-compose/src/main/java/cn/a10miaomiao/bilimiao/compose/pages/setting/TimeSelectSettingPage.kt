@@ -26,12 +26,10 @@ import cn.a10miaomiao.bilimiao.compose.common.localContainerView
 import cn.a10miaomiao.bilimiao.compose.common.mypage.PageConfig
 import cn.a10miaomiao.bilimiao.compose.common.preference.rememberPreferenceFlow
 import cn.a10miaomiao.bilimiao.compose.components.preference.textIntPreference
-import cn.a10miaomiao.bilimiao.compose.pages.time.TimeSettingPage
 import com.a10miaomiao.bilimiao.comm.datastore.SettingConstants
 import com.a10miaomiao.bilimiao.comm.datastore.SettingPreferences
 import com.a10miaomiao.bilimiao.comm.entity.region.RegionInfo
 import com.a10miaomiao.bilimiao.comm.store.RegionStore
-import com.a10miaomiao.bilimiao.comm.store.TimeSettingStore
 import com.a10miaomiao.bilimiao.comm.utils.TimeSelectUtil
 import com.a10miaomiao.bilimiao.store.WindowStore
 import kotlinx.coroutines.flow.map
@@ -65,24 +63,7 @@ private fun TimeSelectSettingPageContent() {
     val scope = rememberCoroutineScope()
     val dataStore = remember { SettingPreferences.run { context.dataStore } }
     val bottomSheetState by rememberInstance<BottomSheetState>()
-    val timeSettingStore by rememberInstance<TimeSettingStore>()
     val regionStore by rememberInstance<RegionStore>()
-
-    // 当前时间范围显示（从 DataStore 读）
-    var timeDisplay by remember {
-        mutableStateOf(
-            runBlocking {
-                SettingPreferences.run {
-                    SettingPreferences.mapData(context) { prefs ->
-                        val from = prefs[SettingPreferences.TimeSelectCustomFrom] ?: "20090901"
-                        val to = prefs[SettingPreferences.TimeSelectCustomTo] ?: "今天"
-                        if (to == "今天") "2009-09-01 ~ 今天"
-                        else "${from.substring(0,4)}-${from.substring(4,6)}-${from.substring(6)} ~ ${to.substring(0,4)}-${to.substring(4,6)}-${to.substring(6)}"
-                    }
-                }
-            }
-        )
-    }
 
     // 选中的分区（从 DataStore 读）
     var selectedRegionIds by remember {
@@ -97,33 +78,17 @@ private fun TimeSelectSettingPageContent() {
             }
         )
     }
-    var selectedRegionCount by remember { mutableStateOf(selectedRegionIds.size) }
 
-    // 监听 TimeSettingPage 关闭事件，同步时间到 DataStore
+    // 监听 bottom sheet 关闭事件，刷新已选分区数量
     val bottomSheetPage by bottomSheetState.page.collectAsState()
     LaunchedEffect(bottomSheetPage) {
         if (bottomSheetPage == null) {
-            // Bottom sheet closed, sync time from TimeSettingStore to DataStore
-            val tState = timeSettingStore.state
-            val from = tState.timeFrom.getValue()
-            val to = tState.timeTo.getValue()
-            SettingPreferences.run {
-                SettingPreferences.edit(context) { prefs ->
-                    prefs[SettingPreferences.TimeSelectCustomFrom] = from
-                    prefs[SettingPreferences.TimeSelectCustomTo] = to
-                    prefs[SettingPreferences.TimeSelectTimeMode] = SettingConstants.TIME_SELECT_TIME_MODE_CUSTOM
-                }
-            }
-            // Update display
-            timeDisplay = "${from.substring(0,4)}-${from.substring(4,6)}-${from.substring(6)} ~ ${to.substring(0,4)}-${to.substring(4,6)}-${to.substring(6)}"
-            // 刷新已选分区数量
             selectedRegionIds = SettingPreferences.mapData(context) { prefs ->
                 prefs[SettingPreferences.TimeSelectSelectedRegions]
                     ?.mapNotNull { it.toIntOrNull() }
                     ?.toSet()
                     ?: emptySet()
             }
-            selectedRegionCount = selectedRegionIds.size
         }
     }
 
@@ -151,13 +116,12 @@ private fun TimeSelectSettingPageContent() {
                 key = "time",
                 title = { Text("时间线设置") }
             )
-            preference(
-                key = "time_range",
-                title = { Text("时间范围设置") },
-                summary = { Text(timeDisplay) },
-                onClick = {
-                    bottomSheetState.open(TimeSettingPage())
-                },
+            textIntPreference(
+                key = SettingPreferences.TimeSelectExcludeRecent.name,
+                defaultValue = 0,
+                title = { Text("排除最近N天") },
+                summary = { Text(if (it <= 0) "不过滤，展示全部时间" else "排除最近 ${it} 天的视频") },
+                label = "天",
             )
 
             // ========== 排序权重 ==========

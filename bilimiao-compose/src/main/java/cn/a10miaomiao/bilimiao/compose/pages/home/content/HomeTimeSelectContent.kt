@@ -1,6 +1,7 @@
 package cn.a10miaomiao.bilimiao.compose.pages.home.content
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -31,6 +32,7 @@ import cn.a10miaomiao.bilimiao.compose.common.toPaddingValues
 import cn.a10miaomiao.bilimiao.compose.components.list.SwipeToRefresh
 import cn.a10miaomiao.bilimiao.compose.components.video.VideoItemBox
 import cn.a10miaomiao.bilimiao.compose.pages.home.HomePageState
+import cn.a10miaomiao.bilimiao.compose.pages.setting.TimeSelectSettingPage
 import com.a10miaomiao.bilimiao.comm.datastore.SettingConstants
 import com.a10miaomiao.bilimiao.comm.datastore.SettingPreferences
 import com.a10miaomiao.bilimiao.comm.entity.ResultInfo
@@ -65,6 +67,10 @@ private class HomeTimeSelectContentViewModel(
 
     fun toVideoDetail(video: RegionVideoInfo) {
         pageNavigation.navigateToVideoInfo(video.id)
+    }
+
+    fun toSetting() {
+        pageNavigation.navigate(TimeSelectSettingPage)
     }
 
     /** 预读取配置（init 时加载一次） */
@@ -283,14 +289,10 @@ private class HomeTimeSelectContentViewModel(
         val minDuration = prefs[SettingPreferences.TimeSelectMinDuration] ?: 0
         val minPlayCount = prefs[SettingPreferences.TimeSelectMinPlayCount] ?: 0
 
-        // 优先使用自定义时间范围，否则默认全部时间
-        val customFrom = prefs[SettingPreferences.TimeSelectCustomFrom]
-        val customTo = prefs[SettingPreferences.TimeSelectCustomTo]
-        val (timeFrom, timeTo) = if (customFrom != null && customTo != null) {
-            Pair(customFrom, customTo)
-        } else {
-            Pair("20090901", getTodayStr())
-        }
+        // 排除最近N天：N=0 表示全部时间
+        val excludeDays = prefs[SettingPreferences.TimeSelectExcludeRecent] ?: 0
+        val timeFrom = "20090901"
+        val timeTo = if (excludeDays <= 0) getTodayStr() else getDateDaysAgo(excludeDays)
 
         val regions = if (allRegions) {
             regionStore.state.regions
@@ -391,21 +393,27 @@ internal fun HomeTimeSelectContent(
                     }
                 }
                 if (listFail.isNotEmpty() && list.isEmpty()) {
-                    Box(
+                    Column(
                         modifier = Modifier.fillMaxWidth(),
-                        contentAlignment = Alignment.Center
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         TextButton(onClick = { viewModel.refresh() }) {
                             Text(listFail)
                         }
+                        TextButton(onClick = { viewModel.toSetting() }) {
+                            Text("前往设置")
+                        }
                     }
                 }
                 if (!listLoading && listFail.isEmpty() && listFinished && list.isEmpty()) {
-                    Box(
+                    Column(
                         modifier = Modifier.fillMaxWidth(),
-                        contentAlignment = Alignment.Center
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Text("没有找到符合条件的视频")
+                        Text("没有符合条件的视频")
+                        TextButton(onClick = { viewModel.toSetting() }) {
+                            Text("前往设置")
+                        }
                     }
                 }
             }

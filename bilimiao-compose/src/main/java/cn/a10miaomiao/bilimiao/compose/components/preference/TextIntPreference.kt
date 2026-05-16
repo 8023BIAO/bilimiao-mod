@@ -28,7 +28,7 @@ fun LazyListScope.textIntPreference(
     },
     enabled: () -> Boolean = { true },
     icon: @Composable (() -> Unit)? = null,
-    summary: @Composable (() -> Unit)? = null,
+    summary: @Composable ((Int) -> Unit)? = null,
     label: String = "",
 ) {
     item(key = key, contentType = "TextIntPreference") {
@@ -40,7 +40,7 @@ fun LazyListScope.textIntPreference(
             modifier = modifier,
             enabled = enabled(),
             icon = icon,
-            summary = summary,
+            summary = summary?.let { { it(value) } },
             label = label,
         )
     }
@@ -56,20 +56,20 @@ fun TextIntPreference(
     summary: @Composable (() -> Unit)? = null,
     label: String = "",
 ) {
-    var value by state
     var showDialog by remember { mutableStateOf(false) }
+    var value by state
     var tempValue by remember { mutableStateOf(value.toString()) }
 
     Preference(
-        title = title,
         modifier = modifier,
+        title = title,
         enabled = enabled,
         icon = icon,
-        summary = summary,
+        summary = summary ?: { Text(value.toString() + label) },
         onClick = {
             tempValue = if (value == 0) "" else value.toString()
             showDialog = true
-        }
+        },
     )
 
     if (showDialog) {
