@@ -154,11 +154,13 @@ private class HomeTimeSelectContentViewModel(
                 .regionVideoRanking(rid = region.tid)
                 .awaitCall()
                 .json<ResultInfo<RankingV2Response>>()
+            android.util.Log.d("TimeSelect", "API rid=${region.tid} code=${res.code} count=${res.data?.list?.size ?: 0}")
 
             if (res.code == 0) {
                 val videoList = res.data?.list ?: emptyList()
                 val timeFromLong = config.timeFrom.toLongOrNull() ?: 20090901L
                 val timeToLong = config.timeTo.toLongOrNull() ?: 99999999L
+                android.util.Log.d("TimeSelect", "rid=${region.tid} rawList=${videoList.size} timeFrom=$timeFromLong timeTo=$timeToLong")
 
                 // 过滤 + 转换
                 val newVideos = videoList.filter { video ->
@@ -174,6 +176,7 @@ private class HomeTimeSelectContentViewModel(
                 }
 
                 if (newVideos.isNotEmpty()) {
+                    android.util.Log.d("TimeSelect", "rid=${region.tid} newVideos=${newVideos.size} after filtering")
                     // 去重后追加到列表，重新排序
                     val existingIds = list.data.value.map { it.id }.toSet()
                     val deduped = newVideos.filter { it.id !in existingIds }

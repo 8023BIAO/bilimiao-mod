@@ -41,6 +41,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.intOrNull
+import kotlinx.serialization.json.contentOrNull
 import me.zhanghai.compose.preference.ProvidePreferenceLocals
 import me.zhanghai.compose.preference.preference
 import me.zhanghai.compose.preference.preferenceCategory
@@ -193,18 +198,21 @@ private fun FlagsSettingPageContent(
                             BufferedReader(InputStreamReader(input, Charsets.UTF_8)).readText()
                         } ?: throw Exception("无法读取文件")
                     }
-                    val data = MiaoJson.fromJson<Map<String, Any?>>(jsonStr) as Map<String, Any?>
-                    val cookieStr = data["cookie"] as? String ?: throw Exception("未找到cookie字段")
-                    val accessToken = data["access_token"] as? String ?: throw Exception("未找到access_token字段")
-                    val refreshToken = data["refresh_token"] as? String ?: throw Exception("未找到refresh_token字段")
-                    val midStr = data["mid"] as? String ?: throw Exception("未找到mid字段")
+                    val importJson = kotlinx.serialization.json.Json { ignoreUnknownKeys = true }
+                    val jsonObj = importJson.parseToJsonElement(jsonStr).jsonObject
+                    val cookieStr = jsonObj["cookie"]?.jsonPrimitive?.content ?: throw Exception("未找到cookie字段")
+                    val accessToken = jsonObj["access_token"]?.jsonPrimitive?.content ?: throw Exception("未找到access_token字段")
+                    val refreshToken = jsonObj["refresh_token"]?.jsonPrimitive?.content ?: throw Exception("未找到refresh_token字段")
+                    val midStr = jsonObj["mid"]?.jsonPrimitive?.content ?: throw Exception("未找到mid字段")
                     val mid = midStr.toLongOrNull() ?: throw Exception("mid格式错误")
-                    val buvid = data["buvid"] as? String ?: ""
+                    val buvid = jsonObj["buvid"]?.jsonPrimitive?.content ?: ""
 
                     // 恢复 WBI 缓存
-                    (data["wbi"] as? Map<*, *>)?.let { wbiData ->
-                        @Suppress("UNCHECKED_CAST")
-                        WbiSigner.restoreWbiCache(wbiData as Map<String, Any?>)
+                    jsonObj["wbi"]?.jsonObject?.let { wbiObj ->
+                        WbiSigner.restoreWbiCache(mapOf(
+                            "mix_key" to (wbiObj["mix_key"]?.jsonPrimitive?.contentOrNull),
+                            "last_fetch_day" to (wbiObj["last_fetch_day"]?.jsonPrimitive?.intOrNull),
+                        ))
                     }
 
                     // 保存设备指纹到 SharedPreferences
