@@ -122,7 +122,7 @@ class PlayerDelegate2(
     private val windowStore by instance<WindowStore>()
     private val themeDelegate by instance<ThemeDelegate>()
 
-    private var themeObserver: Observer<Long>? = null
+    private var themeObserver: Observer<Int>? = null
     private var isBroadcastReceiverRegistered = false
 
     var playerSourceInfo: PlayerSourceInfo? = null
@@ -186,7 +186,7 @@ class PlayerDelegate2(
                 )
                 isBroadcastReceiverRegistered = true
             } catch (e: IllegalArgumentException) {
-                miaoLogger() warn "BroadcastReceiver already registered: ${e.message}"
+                miaoLogger() error "BroadcastReceiver already registered: ${e.message}"
             }
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
