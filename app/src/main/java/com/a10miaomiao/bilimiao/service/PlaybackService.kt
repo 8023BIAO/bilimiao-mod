@@ -42,6 +42,12 @@ class PlaybackService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        // Android 15+ 要求 startForegroundService 后 5 秒内必须调 startForeground。
+        // 如果service已创建但不在前台（unbindPlayer 调了 stopForeground），
+        // 再次 startForegroundService 只会触发 onStartCommand 不会触发 onCreate，
+        // 所以必须在这里也确保 startForeground 被调用。
+        startForegroundCompat(buildPlaceholderNotification())
+
         when (intent?.action) {
             ACTION_PLAY_PAUSE -> {
                 if (isPlaying) {
