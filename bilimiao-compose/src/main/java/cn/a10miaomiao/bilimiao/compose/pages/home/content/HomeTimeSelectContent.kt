@@ -99,7 +99,7 @@ private class HomeTimeSelectContentViewModel(
     )
 
     init {
-        loadData()
+        loadAllRegions()
     }
 
     fun refresh() {
@@ -108,119 +108,92 @@ private class HomeTimeSelectContentViewModel(
         list.reset()
         pendingRegionIndex = 0
         cachedConfig = null
-        loadData()
+        loadAllRegions()
     }
 
     fun loadMore() {
         if (!list.finished.value && !list.loading.value) {
-            loadNextRegion()
+            loadAllRegions()
         }
     }
 
-    /** 初始加载：读配置 + 加载第一个分区 */
-    private fun loadData() = viewModelScope.launch(Dispatchers.IO) {
+    /** 顺序加载所有分区（防爬虫：逐分区串行，空分区自动跳过） */
+    private fun loadAllRegions() = viewModelScope.launch(Dispatchers.IO) {
         try {
-            val config = readConfig()
-            cachedConfig = config
-            pendingRegions = config.selectedRegions
-            pendingRegionIndex = 0
-            android.util.Log.d("TimeSelect", "regions=${pendingRegions.size} first=${pendingRegions.firstOrNull()?.tid} timeFrom=${config.timeFrom} timeTo=${config.timeTo}")
+            val config = if (cachedConfig != null) cachedConfig!!
+            else readConfig().also { cachedConfig = it }
 
-            if (pendingRegions.isEmpty()) {
+            val regions = config.selectedRegions
+            if (pendingRegionIndex == 0) {
+                pendingRegions = regions
+            }
+            android.util.Log.d("TimeSelect", "regions=${regions.size} startIdx=$pendingRegionIndex")
+
+            if (regions.isEmpty()) {
                 list.fail.value = "没有选择分区，请去设置中配置"
                 isRefreshing.value = false
                 return@launch
             }
 
-            // 只加载第一个分区，后续 loadMore 时逐分区加载
-            loadNextRegion(isFirst = true)
-        } catch (e: Exception) {
-            list.fail.value = "加载失败: ${e.message}"
-            isRefreshing.value = false
-        }
-    }
+            val isInitial = pendingRegionIndex == 0
 
-    /** 加载下一个分区（防爬虫：每次只请求一个分区） */
-    private fun loadNextRegion(isFirst: Boolean = false) = viewModelScope.launch(Dispatchers.IO) {
-        val config = cachedConfig ?: return@launch
-        val regions = pendingRegions
-        if (pendingRegionIndex >= regions.size) {
-            list.finished.value = true
-            isRefreshing.value = false
-            return@launch
-        }
+            while (pendingRegionIndex < regions.size) {
+                val region = regions[pendingRegionIndex]
+                pendingRegionIndex++
+                list.loading.value = true
 
-        list.loading.value = true
-        try {
-            val region = regions[pendingRegionIndex]
-            pendingRegionIndex++
+                try {
+                    val res = BiliApiService.regionAPI
+                        .regionVideoRanking(rid = region.tid)
+                        .awaitCall()
+                        .json<ResultInfo<RankingV2Response>>()
+                    android.util.Log.d("TimeSelect", "API rid=${region.tid} code=${res.code} count=${res.data?.list?.size ?: 0}")
 
-            val res = BiliApiService.regionAPI
-                .regionVideoRanking(rid = region.tid)
-                .awaitCall()
-                .json<ResultInfo<RankingV2Response>>()
-            android.util.Log.d("TimeSelect", "API rid=${region.tid} code=${res.code} count=${res.data?.list?.size ?: 0}")
+                    if (res.code == 0) {
+                        val videoList = res.data?.list ?: emptyList()
+                        val timeFromLong = config.timeFrom.toLongOrNull() ?: 20090901L
+                        val timeToLong = config.timeTo.toLongOrNull() ?: 99999999L
 
-            if (res.code == 0) {
-                val videoList = res.data?.list ?: emptyList()
-                val timeFromLong = config.timeFrom.toLongOrNull() ?: 20090901L
-                val timeToLong = config.timeTo.toLongOrNull() ?: 99999999L
-                android.util.Log.d("TimeSelect", "rid=${region.tid} rawList=${videoList.size} timeFrom=$timeFromLong timeTo=$timeToLong")
+                        val newVideos = videoList.filter { video ->
+                            val dateInt = pubdateToDateInt(video.pubdate)
+                            dateInt in timeFromLong..timeToLong
+                        }.map { it.toRegionVideoInfo() }
+                        .filter { video ->
+                            val passDuration = config.minDuration <= 0 ||
+                                (video.duration.toIntOrNull() ?: 0) >= config.minDuration
+                            val passPlayCount = config.minPlayCount <= 0 ||
+                                (video.play.toLongOrNull() ?: 0L) >= config.minPlayCount
+                            passDuration && passPlayCount
+                        }
 
-                // 过滤 + 转换
-                val newVideos = videoList.filter { video ->
-                    val dateInt = pubdateToDateInt(video.pubdate)
-                    dateInt in timeFromLong..timeToLong
-                }.map { it.toRegionVideoInfo() }
-                .filter { video ->
-                    val passDuration = config.minDuration <= 0 ||
-                        (video.duration.toIntOrNull() ?: 0) >= config.minDuration
-                    val passPlayCount = config.minPlayCount <= 0 ||
-                        (video.play.toLongOrNull() ?: 0L) >= config.minPlayCount
-                    passDuration && passPlayCount
-                }
-
-                if (newVideos.isNotEmpty()) {
-                    android.util.Log.d("TimeSelect", "rid=${region.tid} newVideos=${newVideos.size} after filtering")
-                    // 去重后追加到列表，重新排序
-                    val existingIds = list.data.value.map { it.id }.toSet()
-                    val deduped = newVideos.filter { it.id !in existingIds }
-                    if (deduped.isNotEmpty()) {
-                        val merged = list.data.value.toMutableList()
-                        merged.addAll(deduped)
-                        list.data.value = scoreAndSort(merged, config.weights)
+                        if (newVideos.isNotEmpty()) {
+                            android.util.Log.d("TimeSelect", "rid=${region.tid} newVideos=${newVideos.size}")
+                            val existingIds = list.data.value.map { it.id }.toSet()
+                            val deduped = newVideos.filter { it.id !in existingIds }
+                            if (deduped.isNotEmpty()) {
+                                val merged = list.data.value.toMutableList()
+                                merged.addAll(deduped)
+                                list.data.value = scoreAndSort(merged, config.weights)
+                                break // 拿到数据就停，后续分区等用户滑动触发
+                            }
+                        }
                     }
+                } catch (e: Exception) {
+                    android.util.Log.e("TimeSelect", "rid=${region.tid} failed: ${e.message}")
+                } finally {
+                    list.loading.value = false
                 }
             }
 
-            // 如果还有更多分区且当前没拿到数据，自动加载下一个
-            if (pendingRegionIndex < regions.size && list.data.value.isEmpty()) {
-                android.util.Log.d("TimeSelect", "rid=${region.tid} empty, auto-advancing to next region")
-                list.loading.value = false
-                loadNextRegion(isFirst = pendingRegionIndex <= 1) // 前两个分区都算"首批"
-                return@launch
-            }
-
-            // 如果最后一个分区或没更多了，标记完成
             if (pendingRegionIndex >= regions.size) {
                 list.finished.value = true
             }
-            if (isFirst && list.data.value.isEmpty()) {
-                list.fail.value = if (pendingRegionIndex >= regions.size) "没有找到符合条件的视频" else "当前分区无数据，下拉加载更多"
+            if (isInitial && list.data.value.isEmpty()) {
+                list.fail.value = "没有找到符合条件的视频"
             }
         } catch (e: Exception) {
-            // 失败也自动跳过
-            android.util.Log.e("TimeSelect", "rid=${regions.getOrNull(pendingRegionIndex-1)?.tid} failed: ${e.message}")
-            if (pendingRegionIndex < regions.size) {
-                list.loading.value = false
-                loadNextRegion(isFirst = pendingRegionIndex <= 1)
-                return@launch
-            }
-            if (isFirst && list.data.value.isEmpty()) {
-                list.fail.value = "加载失败: ${e.message}"
-            }
+            list.fail.value = "加载失败: ${e.message}"
         } finally {
-            list.loading.value = false
             isRefreshing.value = false
         }
     }
