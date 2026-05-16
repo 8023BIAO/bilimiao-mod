@@ -122,6 +122,9 @@ class PlayerDelegate2(
     private val windowStore by instance<WindowStore>()
     private val themeDelegate by instance<ThemeDelegate>()
 
+    private var themeObserver: Observer<Long>? = null
+    private var isBroadcastReceiverRegistered = false
+
     var playerSourceInfo: PlayerSourceInfo? = null
 
     // 未登陆：48[480P 清晰]及以下
@@ -169,16 +172,23 @@ class PlayerDelegate2(
         playerCoroutineScope.onCreate()
         initPlayer()
         if (views.videoPlayer == null) return
-        val intentFilter = IntentFilter().apply {
-            addAction(AudioManager.ACTION_AUDIO_BECOMING_NOISY)
-            addAction(Intent.ACTION_MEDIA_BUTTON)
+        if (!isBroadcastReceiverRegistered) {
+            val intentFilter = IntentFilter().apply {
+                addAction(AudioManager.ACTION_AUDIO_BECOMING_NOISY)
+                addAction(Intent.ACTION_MEDIA_BUTTON)
+            }
+            try {
+                registerReceiver(
+                    activity,
+                    broadcastReceiver,
+                    intentFilter,
+                    ContextCompat.RECEIVER_NOT_EXPORTED
+                )
+                isBroadcastReceiverRegistered = true
+            } catch (e: IllegalArgumentException) {
+                miaoLogger() warn "BroadcastReceiver already registered: ${e.message}"
+            }
         }
-        registerReceiver(
-            activity,
-            broadcastReceiver,
-            intentFilter,
-            ContextCompat.RECEIVER_NOT_EXPORTED
-        )
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             picInPicHelper = PicInPicHelper(activity, player)
         }
@@ -189,13 +199,16 @@ class PlayerDelegate2(
         player?.isReleaseWhenLossAudio = true
 
         // 主题监听
-        themeDelegate.observeTheme(activity, Observer {
-            val themeColor = it.toInt()
-            player?.updateThemeColor(activity, themeColor)
-            areaLimitBoxController.updateThemeColor(themeColor)
-            errorMessageBoxController.updateThemeColor(themeColor)
-            completionBoxController.updateThemeColor(themeColor)
-        })
+        if (themeObserver == null) {
+            themeObserver = Observer {
+                val themeColor = it.toInt()
+                player?.updateThemeColor(activity, themeColor)
+                areaLimitBoxController.updateThemeColor(themeColor)
+                errorMessageBoxController.updateThemeColor(themeColor)
+                completionBoxController.updateThemeColor(themeColor)
+            }
+            themeDelegate.observeTheme(activity, themeObserver!!)
+        }
 
         if (isPlaying()) {
             loadingBoxController.hideLoading()
@@ -262,7 +275,13 @@ class PlayerDelegate2(
     override fun onDestroy() {
         playerClosed = true
         playerCoroutineScope.onDestroy()
-        activity.unregisterReceiver(broadcastReceiver)
+        try {
+            activity.unregisterReceiver(broadcastReceiver)
+            isBroadcastReceiverRegistered = false
+        } catch (e: IllegalArgumentException) {
+            // 接收器未注册，忽略
+        }
+        themeObserver = null
         closePlayer()
     }
 
