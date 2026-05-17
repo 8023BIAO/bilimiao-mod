@@ -785,7 +785,7 @@ class DanmakuVideoPlayer : StandardGSYVideoPlayer {
                 MotionEvent.ACTION_DOWN -> {
                     danmakuDownTouchX = event.x
                     danmakuDownTouchY = event.y
-                    isDanmakuTouchActive = isTouchHitDanmaku(event.x, event.y, hitSlop)
+                    isDanmakuTouchActive = hasTimestampDanmakuAt(event.x, event.y, hitSlop)
                     isDanmakuTouchActive
                 }
                 MotionEvent.ACTION_MOVE -> {
@@ -823,6 +823,33 @@ class DanmakuVideoPlayer : StandardGSYVideoPlayer {
                 if (hitBounds.intersect(x - hitSlop, y - hitSlop, x + hitSlop, y + hitSlop)) {
                     hit = true
                     return 1
+                }
+                return 0
+            }
+        })
+        return hit
+    }
+
+    /**
+     * 检查触摸位置是否命中了包含时间戳（如 "01:23" 或 "1:23:45"）的弹幕。
+     * 无副作用——不执行跳转，仅用于决定是否拦截触摸事件。
+     */
+    private fun hasTimestampDanmakuAt(x: Float, y: Float, hitSlop: Float): Boolean {
+        val visibleDanmakus = mDanmakuView.currentVisibleDanmakus ?: return false
+        if (visibleDanmakus.isEmpty) return false
+        val hitBounds = android.graphics.RectF()
+        val timestampRegex = Regex("""\d{1,3}[:：]\d{1,2}(?:[:：]\d{1,2})?""")
+        var hit = false
+        visibleDanmakus.forEachSync(object : master.flame.danmaku.danmaku.model.IDanmakus.DefaultConsumer<BaseDanmaku>() {
+            override fun accept(danmaku: BaseDanmaku?): Int {
+                danmaku ?: return 0
+                hitBounds.set(danmaku.left, danmaku.top, danmaku.right, danmaku.bottom)
+                if (hitBounds.intersect(x - hitSlop, y - hitSlop, x + hitSlop, y + hitSlop)) {
+                    val text = danmaku.text.toString()
+                    if (timestampRegex.containsMatchIn(text)) {
+                        hit = true
+                        return 1
+                    }
                 }
                 return 0
             }
