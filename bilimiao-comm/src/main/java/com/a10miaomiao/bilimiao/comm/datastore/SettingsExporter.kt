@@ -138,17 +138,29 @@ object SettingsExporter {
         val export = try {
             json.decodeFromString<SettingsExport>(jsonString)
         } catch (e0: Exception) {
-            // 容错：尝试去掉末尾多余的 }
+            // 容错策略1: 去掉末尾多余的 }
             val trimmed = jsonString.trimEnd()
-            val fixed = if (trimmed.endsWith("}")) trimmed.dropLast(1) else trimmed
+            val fixed1 = if (trimmed.endsWith("}")) trimmed.dropLast(1) else trimmed
             try {
-                json.decodeFromString<SettingsExport>(fixed)
+                json.decodeFromString<SettingsExport>(fixed1)
             } catch (e1: Exception) {
-                ErrorLogCollector.logError(
-                    error = "设置导入失败: JSON解析错误",
-                    stackTrace = e0.toString() + "\nJSON前100字符: " + jsonString.take(100)
-                )
-                throw e0
+                // 容错策略2: 修复中间过早闭合的 }（如 ]} 后直接跟着下一个 key）
+                try {
+                    val fixed2 = jsonString.replace(
+                        Regex("\"\\s*]\\s*}\\s*\"")
+                    ) { match ->
+                        val after = match.value.dropLast(1)
+                        val prefix = after.substringBeforeLast("}").trimEnd() + ","
+                        "$prefix\""
+                    }
+                    json.decodeFromString<SettingsExport>(fixed2)
+                } catch (e2: Exception) {
+                    ErrorLogCollector.logError(
+                        error = "设置导入失败: JSON解析错误",
+                        stackTrace = e0.toString() + "\nJSON前100字符: " + jsonString.take(100)
+                    )
+                    throw e0
+                }
             }
         }
         var count = 0
