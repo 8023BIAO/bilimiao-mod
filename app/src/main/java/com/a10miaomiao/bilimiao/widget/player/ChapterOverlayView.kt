@@ -35,8 +35,14 @@ class ChapterOverlayView @JvmOverloads constructor(
             field = value
             invalidate()
         }
-
     var onChapterClick: ((Long) -> Unit)? = null
+
+    /** 设置文字颜色（跟随主题） */
+    fun setTextColor(color: Int) {
+        textPaint.color = color
+        invalidate()
+    }
+
 
     /** SeekBar的绘制区域（相对本View左边缘的偏移X和宽度） */
     var drawOffsetX: Int = 0

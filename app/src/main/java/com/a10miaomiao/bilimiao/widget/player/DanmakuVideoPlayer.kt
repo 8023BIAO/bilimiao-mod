@@ -1132,10 +1132,6 @@ class DanmakuVideoPlayer : StandardGSYVideoPlayer {
             if (mDialogProgressBarDrawable != null) {
                 mDialogProgressBar.progressDrawable = mDialogProgressBarDrawable
             }
-            mDialogProgressBar = localView.findViewById(progressDialogProgressId)
-            if (mDialogProgressBarDrawable != null) {
-                mDialogProgressBar.progressDrawable = mDialogProgressBarDrawable
-            }
             mDialogSeekTime = localView.findViewById(progressDialogCurrentDurationTextId)
             mDialogSeekTime.setTextColor(mThemeColor)
             mDialogTotalTime = localView.findViewById(progressDialogAllDurationTextId)
@@ -1208,22 +1204,23 @@ class DanmakuVideoPlayer : StandardGSYVideoPlayer {
                 decorView.systemUiVisibility = SYSTEM_UI_FLAG_HIDE_NAVIGATION
                 setLayout(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT)
             }
-            val localLayoutParams = mBrightnessDialog.window!!
-                .attributes
-            localLayoutParams.gravity = Gravity.TOP or Gravity.END
-            localLayoutParams.width = width
-            localLayoutParams.height = height
-            val location = IntArray(2)
-            getLocationOnScreen(location)
-            localLayoutParams.x = location[0]
-            localLayoutParams.y = location[1]
-            // 针对异型屏适配
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                localLayoutParams.layoutInDisplayCutoutMode =
-                    WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
-            }
-            mBrightnessDialog.window!!.attributes = localLayoutParams
         }
+        // 每次显示都更新位置，适配屏幕旋转等变化
+        val localLayoutParams = mBrightnessDialog!!.window!!
+            .attributes
+        localLayoutParams.gravity = Gravity.TOP or Gravity.END
+        localLayoutParams.width = width
+        localLayoutParams.height = height
+        val location = IntArray(2)
+        getLocationOnScreen(location)
+        localLayoutParams.x = location[0]
+        localLayoutParams.y = location[1]
+        // 针对异型屏适配
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            localLayoutParams.layoutInDisplayCutoutMode =
+                WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+        }
+        mBrightnessDialog!!.window!!.attributes = localLayoutParams
         super.showBrightnessDialog(percent)
     }
 

@@ -143,7 +143,7 @@ class DownloadService: Service(), CoroutineScope, DownloadManager.Callback {
      * 是否处于等待下载队列中
      */
     fun isInWaitDownloadQueue(dirPath: String): Boolean {
-        return waitDownloadQueue.indexOfFirst { it.entryDirPath == dirPath } > 0
+        return waitDownloadQueue.indexOfFirst { it.entryDirPath == dirPath } >= 0
     }
 
     /**
@@ -410,7 +410,6 @@ class DownloadService: Service(), CoroutineScope, DownloadManager.Callback {
     private fun completeDownload() {
         val (_, entryDirPath, entry) = curBiliDownloadEntryAndPathInfo ?: return
         entry.downloaded_bytes = entry.total_bytes
-        entry.total_bytes = entry.total_bytes
         entry.is_completed = true
         entry.total_time_milli = (curDownload.value?.length ?: 0L) * 1000
         updateBiliDownloadEntryJson(entryDirPath, entry)
@@ -427,13 +426,11 @@ class DownloadService: Service(), CoroutineScope, DownloadManager.Callback {
      * 完成下载
      */
     private fun nextDownload() {
-        if (waitDownloadQueue.isNotEmpty()) {
-            val next = waitDownloadQueue[0]
-            waitDownloadQueue.removeAt(0)
+        while (waitDownloadQueue.isNotEmpty()) {
+            val next = waitDownloadQueue.removeAt(0)
             if (downloadList.indexOfFirst { it.entry.key == next.entry.key } != -1) {
                 startDownload(next)
-            } else {
-                nextDownload()
+                return
             }
         }
     }

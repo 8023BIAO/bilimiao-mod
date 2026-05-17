@@ -2,10 +2,8 @@ package cn.a10miaomiao.bilimiao.compose.pages.setting
 
 import android.app.Activity
 import android.content.Intent
-import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -13,8 +11,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
@@ -29,13 +25,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.fragment.app.Fragment
-import androidx.lifecycle.ViewModel
 import cn.a10miaomiao.bilimiao.compose.base.ComposePage
-import cn.a10miaomiao.bilimiao.compose.common.defaultNavOptions
 import cn.a10miaomiao.bilimiao.compose.common.localContainerView
 import cn.a10miaomiao.bilimiao.compose.common.mypage.PageConfig
-import com.a10miaomiao.bilimiao.comm.datastore.SettingPreferences
 import com.a10miaomiao.bilimiao.comm.datastore.SettingsExport
 import com.a10miaomiao.bilimiao.comm.datastore.SettingsExporter
 import com.a10miaomiao.bilimiao.store.WindowStore
@@ -43,10 +35,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
-import org.kodein.di.DI
-import org.kodein.di.DIAware
 import org.kodein.di.compose.rememberInstance
-import org.kodein.di.instance
 import java.io.BufferedReader
 import java.io.InputStreamReader
 
@@ -59,6 +48,11 @@ class ExportSettingPage : ComposePage() {
     }
 }
 
+private sealed class ExportStatus {
+    data class Success(val message: String) : ExportStatus()
+    data class Error(val message: String) : ExportStatus()
+}
+
 @Composable
 private fun ExportSettingPageContent() {
     val context = LocalContext.current
@@ -69,7 +63,7 @@ private fun ExportSettingPageContent() {
     var showImportConfirm by remember { mutableStateOf(false) }
     var pendingJson by remember { mutableStateOf<String?>(null) }
     var pendingFileName by remember { mutableStateOf<String?>(null) }
-    var statusMessage by remember { mutableStateOf<String?>(null) }
+    var exportStatus by remember { mutableStateOf<ExportStatus?>(null) }
 
     val exportLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.CreateDocument("application/json")
@@ -83,9 +77,9 @@ private fun ExportSettingPageContent() {
                             out.write(json.toByteArray(Charsets.UTF_8))
                         }
                     }
-                    statusMessage = "\u2705 导出成功"
+                    exportStatus = ExportStatus.Success("导出成功")
                 } catch (e: Exception) {
-                    statusMessage = "\u274c 导出失败: ${e.message}"
+                    exportStatus = ExportStatus.Error("导出失败: ${e.message}")
                 }
             }
         }
@@ -108,7 +102,7 @@ private fun ExportSettingPageContent() {
                     pendingFileName = uri.lastPathSegment
                     showImportConfirm = true
                 } catch (e: Exception) {
-                    statusMessage = "\u274c 读取失败: ${e.message}"
+                    exportStatus = ExportStatus.Error("读取失败: ${e.message}")
                 }
             }
         }
@@ -163,13 +157,16 @@ private fun ExportSettingPageContent() {
             }
         }
 
-        statusMessage?.let { msg ->
+        exportStatus?.let { status ->
             item("status") {
+                val (text, color) = when (status) {
+                    is ExportStatus.Success -> Pair("✅ ${status.message}", MaterialTheme.colorScheme.primary)
+                    is ExportStatus.Error -> Pair("❌ ${status.message}", MaterialTheme.colorScheme.error)
+                }
                 Text(
-                    text = msg,
+                    text = text,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = if (msg.contains("\u2705")) MaterialTheme.colorScheme.primary
-                            else MaterialTheme.colorScheme.error,
+                    color = color,
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
                 )
             }
@@ -203,16 +200,16 @@ private fun ExportSettingPageContent() {
                         scope.launch {
                             try {
                                 val count = SettingsExporter.importFromJson(context, pendingJson!!)
-                                statusMessage = "\u2705 已导入 $count 项设置，请重启应用"
+                                exportStatus = ExportStatus.Success("已导入 $count 项设置，请重启应用")
                                 withContext(Dispatchers.Main) {
                                     val intent = context.packageManager.getLaunchIntentForPackage(context.packageName)
                                     if (intent != null) {
                                         context.startActivity(android.content.Intent.makeRestartActivityTask(intent.component))
                                     }
-                                    android.os.Process.killProcess(android.os.Process.myPid())
+                                    java.lang.System.exit(0)
                                 }
                             } catch (e: Exception) {
-                                statusMessage = "\u274c 导入失败: ${e.message}"
+                                exportStatus = ExportStatus.Error("导入失败: ${e.message}")
                             }
                         }
                     }

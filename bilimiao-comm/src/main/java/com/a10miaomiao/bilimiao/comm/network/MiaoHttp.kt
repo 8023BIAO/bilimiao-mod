@@ -125,7 +125,7 @@ class MiaoHttp(var url: String? = null) {
         }
 
         fun Response.string(): String {
-            return this.body!!.string()
+            return this.body?.string() ?: ""
         }
 
         inline fun <reified T> Response.json(isLog: Boolean = false): T {

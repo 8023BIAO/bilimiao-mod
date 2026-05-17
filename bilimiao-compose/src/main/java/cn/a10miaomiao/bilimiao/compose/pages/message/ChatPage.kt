@@ -91,6 +91,7 @@ private fun debugJson(raw: String): String {
     return raw
 }
 
+private val parseJson = kotlinx.serialization.json.Json { ignoreUnknownKeys = true }
 data class ParsedMsg(val text: String, val toastText: String = "")
 
 private fun parseMsgText(raw: String): ParsedMsg {
@@ -99,7 +100,7 @@ private fun parseMsgText(raw: String): ParsedMsg {
     if (raw.startsWith("[")) {
         return try {
             @Serializable data class Hint(val text: String = "")
-            val list = kotlinx.serialization.json.Json { ignoreUnknownKeys = true }
+            val list = parseJson
                 .decodeFromString<List<Hint>>(raw)
             val tipText = list.firstOrNull()?.text ?: ""
             ParsedMsg("", toastText = tipText)
@@ -108,7 +109,7 @@ private fun parseMsgText(raw: String): ParsedMsg {
     // 对象格式
     return try {
         @Serializable data class C(val content: String = "")
-        val c = kotlinx.serialization.json.Json { ignoreUnknownKeys = true }
+        val c = parseJson
             .decodeFromString<C>(raw)
         if (c.content.isNotBlank()) {
             // 嵌套数组 → 系统提示，隐藏气泡
@@ -116,7 +117,7 @@ private fun parseMsgText(raw: String): ParsedMsg {
             return ParsedMsg(c.content)
         }
         @Serializable data class Sys(val title: String = "", val text: String = "")
-        val s = kotlinx.serialization.json.Json { ignoreUnknownKeys = true }
+        val s = parseJson
             .decodeFromString<Sys>(raw)
         ParsedMsg(s.text.ifBlank { s.title.ifBlank { "[系统通知]" } })
     } catch (_: Exception) { ParsedMsg("[消息] " + raw.take(30)) }
@@ -182,7 +183,12 @@ private class ChatViewModel(
         }
     }
 
-    fun loadMsgs(beginSeqno: Long = 0) = viewModelScope.launch(Dispatchers.IO) {
+    fun loadMsgs(beginSeqno: Long = 0) {
+        viewModelScope.launch(Dispatchers.IO) { loadMsgsInternal(beginSeqno) }
+    }
+
+    /** 内部 suspend 版，供 sendMsg 串行调用避免竞态 */
+    private suspend fun loadMsgsInternal(beginSeqno: Long = 0) {
         try {
             isRefreshing.value = true
             val res = BiliApiService.messageApi
@@ -271,11 +277,11 @@ private class ChatViewModel(
             if (res.isSuccess) {
                 inputText.value = ""
                 showSendDialog.value = false
-                // 先移除本地假消息（避免和API返回的真实消息重复）
+                // 先从API刷新获取真实数据，再移除本地假消息（避免竞态窗口）
+                loadMsgsInternal()
                 val cur = list.data.value.toMutableList()
                 cur.removeAll { it.msg_key == fakeMsgKey }
                 list.data.value = cur
-                loadMsgs()  // 从API刷新，获取真实msg_key
                 launch(Dispatchers.Main) { toast("发送成功") }
                 // 通知私信列表刷新
                 MessageRefreshEvent.trigger()

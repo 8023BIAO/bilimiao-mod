@@ -99,7 +99,7 @@ private class FlagsSettingPageViewModel(
                 if (restartIntent != null) {
                     ctx.startActivity(android.content.Intent.makeRestartActivityTask(restartIntent.component))
                 }
-                android.os.Process.killProcess(android.os.Process.myPid())
+                java.lang.System.exit(0)
             } else {
                 Toast.makeText(ctx, "未登录，无需启用游客模式", Toast.LENGTH_SHORT).show()
             }
@@ -117,7 +117,7 @@ private class FlagsSettingPageViewModel(
                     if (restartIntent != null) {
                         ctx.startActivity(android.content.Intent.makeRestartActivityTask(restartIntent.component))
                     }
-                    android.os.Process.killProcess(android.os.Process.myPid())
+                    java.lang.System.exit(0)
                 } catch (e: Exception) {
                     Toast.makeText(ctx, "恢复失败，请手动导入身份信息", Toast.LENGTH_LONG).show()
                 }
@@ -258,7 +258,7 @@ private fun FlagsSettingPageContent(
                     if (restartIntent != null) {
                         context.startActivity(android.content.Intent.makeRestartActivityTask(restartIntent.component))
                     }
-                    android.os.Process.killProcess(android.os.Process.myPid())
+                    java.lang.System.exit(0)
                 } catch (e: Exception) {
                     Toast.makeText(context, "导入失败：${e.message}", Toast.LENGTH_LONG).show()
                 }
@@ -305,7 +305,7 @@ private fun FlagsSettingPageContent(
                     if (restartIntent != null) {
                         context.startActivity(android.content.Intent.makeRestartActivityTask(restartIntent.component))
                     }
-                    android.os.Process.killProcess(android.os.Process.myPid())
+                    java.lang.System.exit(0)
                 } catch (e: Exception) {
                     Toast.makeText(context, "导入失败：${e.message}", Toast.LENGTH_LONG).show()
                 }
@@ -538,7 +538,7 @@ private fun FlagsSettingPageContent(
                                     if (intent != null) {
                                         context.startActivity(android.content.Intent.makeRestartActivityTask(intent.component))
                                     }
-                                    android.os.Process.killProcess(android.os.Process.myPid())
+                                    java.lang.System.exit(0)
                                 } catch (e: Exception) {
                                     Toast.makeText(context, "重置失败：${e.message}", Toast.LENGTH_LONG).show()
                                 }
@@ -606,7 +606,7 @@ private fun FlagsSettingPageContent(
                                 if (intent != null) {
                                     context.startActivity(android.content.Intent.makeRestartActivityTask(intent.component))
                                 }
-                                android.os.Process.killProcess(android.os.Process.myPid())
+                                java.lang.System.exit(0)
                             } catch (e: NumberFormatException) {
                                 Toast.makeText(context, "请输入数字", Toast.LENGTH_SHORT).show()
                             }

@@ -8,12 +8,16 @@ import android.widget.Toast
  */
 object ToastManager {
 
+    private var toast: Toast? = null
+
     fun show(text: String) {
-        Toast.makeText(
-            BilimiaoCommApp.commApp.app,
-            text,
-            Toast.LENGTH_SHORT,
-        ).show()
+        val app = BilimiaoCommApp.commApp.app
+        if (toast == null) {
+            toast = Toast.makeText(app, text, Toast.LENGTH_SHORT)
+        } else {
+            toast?.setText(text)
+        }
+        toast?.show()
     }
 }
 

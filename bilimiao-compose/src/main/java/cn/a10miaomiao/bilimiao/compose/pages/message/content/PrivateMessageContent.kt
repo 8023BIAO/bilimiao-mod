@@ -90,6 +90,10 @@ internal object UserInfoCache {
 
     private var saveFile: java.io.File? = null
     private val saveJson = Json { ignoreUnknownKeys = true }
+    private var saveJob: kotlinx.coroutines.Job? = null
+    private val saveScope = kotlinx.coroutines.CoroutineScope(
+        kotlinx.coroutines.SupervisorJob() + kotlinx.coroutines.Dispatchers.IO
+    )
 
     /** 🔧 在应用启动时调用，从文件恢复缓存 */
     @Synchronized fun init(file: java.io.File) {
@@ -105,19 +109,28 @@ internal object UserInfoCache {
         } catch (_: Exception) {}
     }
 
-    /** 🔧 写入后持久化到文件 */
-    @Synchronized private fun save() {
+    /** 🔧 防抖持久化：3 秒内多次写入合并为一次 */
+    @Synchronized private fun scheduleSave() {
+        saveJob?.cancel()
+        saveJob = saveScope.launch {
+            kotlinx.coroutines.delay(3000)
+            performSave()
+        }
+    }
+
+    @Synchronized private fun performSave() {
         try {
             val file = saveFile ?: return
             val list = cache.values.toList()
-            file.writeText(saveJson.encodeToString(kotlinx.serialization.builtins.ListSerializer(AccInfoData.serializer()), list))
+            file.writeText(saveJson.encodeToString(
+                kotlinx.serialization.builtins.ListSerializer(AccInfoData.serializer()), list))
         } catch (_: Exception) {}
     }
 
     @Synchronized fun get(uid: Long) = cache[uid]
-    @Synchronized fun put(uid: Long, info: AccInfoData) { cache[uid] = info; save() }
+    @Synchronized fun put(uid: Long, info: AccInfoData) { cache[uid] = info; scheduleSave() }
     @Synchronized fun contains(uid: Long) = cache.containsKey(uid)
-    @Synchronized fun putAll(map: Map<Long, AccInfoData>) { cache.putAll(map); save() }
+    @Synchronized fun putAll(map: Map<Long, AccInfoData>) { cache.putAll(map); scheduleSave() }
 }
 
 // 全局刷新事件（ChatPage发消息后触发，PrivateMessageContent监听）
