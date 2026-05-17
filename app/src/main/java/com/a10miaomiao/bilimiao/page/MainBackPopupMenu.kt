@@ -4,6 +4,7 @@ import android.app.Activity
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
+import android.view.ContextThemeWrapper
 import androidx.appcompat.widget.PopupMenu
 import com.a10miaomiao.bilimiao.MainActivity
 import com.a10miaomiao.bilimiao.comm.delegate.player.BasePlayerDelegate
@@ -14,7 +15,7 @@ class MainBackPopupMenu(
     private val basePlayerDelegate: BasePlayerDelegate,
 ): PopupMenu.OnMenuItemClickListener {
 
-    private val popupMenu = PopupMenu(activity, anchor)
+    private val popupMenu = PopupMenu(ContextThemeWrapper(activity, com.a10miaomiao.bilimiao.R.style.Theme_Bilimiao), anchor)
 
     init {
         popupMenu.menu.apply {

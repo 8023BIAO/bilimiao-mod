@@ -29,6 +29,7 @@ import com.bumptech.glide.integration.compose.GlideImage
 fun DynamicModuleAuthorBox(
     author: bilibili.app.dynamic.v2.ModuleAuthor,
     isJumpToUser: Boolean = true,
+    showUserInfo: Boolean = true,
 ) {
     val authorData = author.author ?: return
     val pageNavigation = localPageNavigation()
@@ -46,6 +47,7 @@ fun DynamicModuleAuthorBox(
         face = authorData.face,
         labelText = author.ptimeLabelText,
         locationText = author.ptimeLocationText,
+        showUserInfo = showUserInfo,
         onClick = ::jumpToUser,
     )
 }
@@ -57,9 +59,9 @@ fun DynamicModuleAuthorBox(
     face: String,
     labelText: String,
     locationText: String,
+    showUserInfo: Boolean = true,
     onClick: (() -> Unit)? = null,
 ) {
-
     Row(
         modifier = Modifier
             .run {
@@ -68,38 +70,50 @@ fun DynamicModuleAuthorBox(
             }
             .fillMaxWidth()
             .padding(10.dp)
-
     ) {
-        GlideImage(
-            model = UrlUtil.autoHttps(face) + "@200w_200h",
-            contentDescription = null,
-            modifier = Modifier
-                .size(40.dp, 40.dp)
-                .clip(CircleShape),
-        )
-        Column(
-            modifier = Modifier.padding(start = 5.dp),
-            verticalArrangement = Arrangement.Center
-        ) {
-            Text(
-                text = name,
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurface,
+        if (showUserInfo) {
+            GlideImage(
+                model = UrlUtil.autoHttps(face) + "@200w_200h",
+                contentDescription = null,
+                modifier = Modifier
+                    .size(40.dp, 40.dp)
+                    .clip(CircleShape),
             )
-            Row {
+            Column(
+                modifier = Modifier.padding(start = 5.dp),
+                verticalArrangement = Arrangement.Center
+            ) {
                 Text(
-                    text = labelText,
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.outline,
+                    text = name,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
                 )
-                Spacer(modifier = Modifier.width(10.dp))
-                Text(
-                    text = locationText,
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.outline,
-                )
+                Row {
+                    Text(
+                        text = labelText,
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.outline,
+                    )
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Text(
+                        text = locationText,
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.outline,
+                    )
+                }
             }
-
+        } else {
+            Text(
+                text = labelText,
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.outline,
+            )
+            Spacer(modifier = Modifier.width(10.dp))
+            Text(
+                text = locationText,
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.outline,
+            )
         }
     }
 }

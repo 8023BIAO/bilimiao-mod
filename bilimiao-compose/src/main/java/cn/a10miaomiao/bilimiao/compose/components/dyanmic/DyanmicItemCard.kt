@@ -19,6 +19,7 @@ fun DynamicItemCard(
     modifier: Modifier = Modifier,
     item: bilibili.app.dynamic.v2.DynamicItem,
     isJumpToUser: Boolean = true,
+    showAuthor: Boolean = true,
     onClick: () -> Unit,
 ) {
     MiaoCard(
@@ -30,6 +31,7 @@ fun DynamicItemCard(
             DynamicModuleBox(
                 module = module,
                 isJumpToUser = isJumpToUser,
+                showAuthor = showAuthor,
             )
         }
         Spacer(Modifier.height(10.dp))

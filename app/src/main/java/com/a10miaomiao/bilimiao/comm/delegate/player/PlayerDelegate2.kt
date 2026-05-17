@@ -714,6 +714,18 @@ class PlayerDelegate2(
     }
 
     override fun closePlayer() {
+        // 如果在画中画模式，先退出（API 36 移除了 exitPictureInPictureMode，用反射兼容）
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
+            && activity.isInPictureInPictureMode
+        ) {
+            try {
+                val method = activity::class.java
+                    .getMethod("exitPictureInPictureMode")
+                method.invoke(activity)
+            } catch (_: NoSuchMethodException) {
+                // skip if method not available
+            }
+        }
         playerClosed = true
         scaffoldApp.showPlayer = false
         playerCoroutineScope.onDestroy()
@@ -815,17 +827,23 @@ class PlayerDelegate2(
         danmakuPosition: Long,
     ) {
         val dispDensity = activity.resources.displayMetrics.density
+        // 先恢复播放，确保 danmaku view 处于活跃状态再添加弹幕。
+        // 否则 addDanmaku 发出的 NOTIFY_RENDERING 会被后面的
+        // start(position) 中 handler.removeCallbacksAndMessages(null) 清除，
+        // 导致弹幕即使已在 danmakuList 中也无法立即渲染。
+        if (!isPlaying()) {
+            player?.onVideoResume()
+        }
+        // 使用实时的 currentPosition（恢复播放后已更新），而非调用方在 API 请求前捕获的过期值
+        val currentPosition = player?.currentPosition ?: danmakuPosition
         val danmaku = controller.createDanmaku(type).apply {
             text = danmakuText
             textColor = danmakuTextColor
             textSize = danmakuTextSize * (dispDensity - 0.6f);
-            time = danmakuPosition + 100
+            time = currentPosition + 100
             borderColor = 0xFFFFFFFF.toInt()
         }
         player?.addDanmaku(danmaku)
-        if (!isPlaying()) {
-            player?.onVideoResume()
-        }
     }
 
     override fun setProxy(proxyServer: ProxyServerInfo, uposHost: String) {

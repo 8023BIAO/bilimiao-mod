@@ -3,6 +3,7 @@ package com.a10miaomiao.bilimiao.comm.delegate.player
 import android.app.Activity
 import android.view.Menu
 import android.view.View
+import android.view.ContextThemeWrapper
 import androidx.appcompat.widget.PopupMenu
 import com.a10miaomiao.bilimiao.comm.utils.setCheckMarkTint
 
@@ -14,7 +15,7 @@ class SpeedPopupMenu(
     private val themeColor: Int,
 ) {
     private var speedListener: ((Float) -> Unit)? = null
-    private var popupMenu = PopupMenu(activity, anchor)
+    private var popupMenu = PopupMenu(ContextThemeWrapper(activity, com.a10miaomiao.bilimiao.R.style.Theme_Bilimiao), anchor)
     private var currentValue = value
 
     init {
@@ -45,7 +46,7 @@ class SpeedPopupMenu(
     }
 
     fun show() {
-        popupMenu = PopupMenu(activity, anchor)
+        popupMenu = PopupMenu(ContextThemeWrapper(activity, com.a10miaomiao.bilimiao.R.style.Theme_Bilimiao), anchor)
         popupMenu.menu.apply { initMenu() }
         updateChecked()
         if (themeColor != 0) popupMenu.setCheckMarkTint(themeColor)

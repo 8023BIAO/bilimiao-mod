@@ -235,6 +235,7 @@ fun DynamicUpperContent(
                     modifier = Modifier
                         .widthIn(max = 600.dp)
                         .fillMaxWidth(),
+                    showAuthor = false,
                     item = it,
                     onClick = {
                         viewModel.savedListIndex = listState.firstVisibleItemIndex

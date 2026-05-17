@@ -202,3 +202,23 @@ Phase 2 (今日冲刺): 2026.05.14 01:37 → 09:40
 - 下载引擎（DownloadService）
 - 主题系统基础架构（MaterialKolor）
 - DI 框架（Kodein）
+
+## 五、Phase 3：主题彻底修复 & 动态页UI修复 & 弹幕/PiP修复
+
+> 2026.05.17 | 14 个文件 | +123 / -57 行
+
+### 3.1 主题切换彻底修复 🎨
+- `fix:` ViewConfig 改用 `resources.newTheme()` 绕过 `Activity.mTheme` 缓存（第2次切换后主题卡在第一次的问题）
+- `fix:` 所有 PopupMenu 改用 `ContextThemeWrapper(activity, Theme_Bilimiao)` 确保弹窗颜色跟随主题
+- `fix:` AppStore.setDarkMode 同步更新 stateFlow，消除 onConfigurationChanged 的 race condition
+
+### 3.2 动态 UP tab 冗余去除 🗑️
+- `fix:` 选中某个 UP 后，右侧帖子卡片不再重复显示 UP 头像和名字，保留发布时间
+- `DynamicModuleAuthorBox` 新增 `showUserInfo` 参数控制
+
+### 3.3 弹幕发送可见性修复 💬
+- `fix:` 先 resume 再 addDanmaku，避免 `NOTIFY_RENDERING` 被 `start(position)` 的 `removeCallbacksAndMessages` 清除
+- 使用实时 `currentPosition` 替代 API 请求前的过期 position
+
+### 3.4 PiP 退出修复 📺
+- `fix:` `closePlayer()` 中先退出画中画模式再释放播放器（API 36 移除了公开方法，用反射兼容）

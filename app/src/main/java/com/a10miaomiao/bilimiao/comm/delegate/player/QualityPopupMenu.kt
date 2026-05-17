@@ -3,6 +3,7 @@ package com.a10miaomiao.bilimiao.comm.delegate.player
 import android.app.Activity
 import android.view.Menu
 import android.view.View
+import android.view.ContextThemeWrapper
 import androidx.appcompat.widget.PopupMenu
 import com.a10miaomiao.bilimiao.R
 import com.a10miaomiao.bilimiao.comm.delegate.player.entity.PlayerSourceInfo
@@ -18,7 +19,7 @@ class QualityPopupMenu(
     private val themeColor: Int,
 ) {
     private var qualityListener: ((Int) -> Unit)? = null
-    private var popupMenu = PopupMenu(activity, anchor)
+    private var popupMenu = PopupMenu(ContextThemeWrapper(activity, com.a10miaomiao.bilimiao.R.style.Theme_Bilimiao), anchor)
     val MAX_QUALITY_NOT_LOGIN = 48 // 48[480P 清晰]
     val MAX_QUALITY_NOT_VIP = 80 // 80[1080P 高清]
     private var currentValue = value
@@ -58,7 +59,7 @@ class QualityPopupMenu(
     }
 
     fun show() {
-        popupMenu = PopupMenu(activity, anchor)
+        popupMenu = PopupMenu(ContextThemeWrapper(activity, com.a10miaomiao.bilimiao.R.style.Theme_Bilimiao), anchor)
         popupMenu.menu.apply { initMenu() }
         updateChecked()
         if (themeColor != 0) popupMenu.setCheckMarkTint(themeColor)

@@ -9,6 +9,7 @@ import android.util.Rational
 import android.view.MenuItem
 import android.view.MotionEvent
 import android.view.View
+import android.view.ContextThemeWrapper
 import android.view.WindowManager
 import android.view.accessibility.AccessibilityEvent
 import androidx.appcompat.app.AppCompatActivity
@@ -549,7 +550,7 @@ class PlayerController(
     fun showFullModeMenu(view: View) {
         val fullModeMenuItemClick = this::fullModeMenuItemClick
         scope.launch {
-            val popupMenu = PopupMenu(activity, view)
+            val popupMenu = PopupMenu(ContextThemeWrapper(activity, com.a10miaomiao.bilimiao.R.style.Theme_Bilimiao), view)
             val fullMode = SettingPreferences.mapData(activity) {
                 it[PlayerFullMode] ?: SettingConstants.PLAYER_FULL_MODE_AUTO
             }
@@ -591,7 +592,7 @@ class PlayerController(
 
     fun showMoreMenu(view: View) {
         moreMenuAnchor = view
-        val popupMenu = PopupMenu(activity, view)
+        val popupMenu = PopupMenu(ContextThemeWrapper(activity, com.a10miaomiao.bilimiao.R.style.Theme_Bilimiao), view)
         popupMenu.inflate(R.menu.player_top_more)
         popupMenu.setOnMenuItemClickListener(this::moreMenuItemClick)
         popupMenu.show()

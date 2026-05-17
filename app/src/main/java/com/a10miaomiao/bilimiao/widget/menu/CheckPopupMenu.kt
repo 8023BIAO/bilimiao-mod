@@ -4,6 +4,7 @@ import android.content.Context
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
+import android.view.ContextThemeWrapper
 import androidx.appcompat.widget.PopupMenu
 import com.a10miaomiao.bilimiao.comm.utils.setCheckMarkTint
 
@@ -15,7 +16,7 @@ class CheckPopupMenu<T>(
     themeColor: Int = 0,
 ) : PopupMenu.OnMenuItemClickListener {
 
-    private val popupMenu = PopupMenu(context, anchor)
+    private val popupMenu = PopupMenu(ContextThemeWrapper(context, com.a10miaomiao.bilimiao.R.style.Theme_Bilimiao), anchor)
     private var currentValue = value
 
     var onMenuItemClick: ((item: MenuItemInfo<T>) -> Unit)? = null

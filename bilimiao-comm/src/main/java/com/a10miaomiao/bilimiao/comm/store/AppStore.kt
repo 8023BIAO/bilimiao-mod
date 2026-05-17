@@ -83,6 +83,12 @@ class AppStore(override val di: DI) :
     )
 
     fun setDarkMode(mode: Int) {
+        // 同步更新 state，确保在 AppCompatDelegate.setDefaultNightMode 触发
+        // uiMode config 变化前，stateFlow 中的 darkMode 已是最新值，避免
+        // onConfigurationChanged 读到过期数据导致 Compose 颜色主题/AppBar 错乱
+        setState {
+            theme = theme?.copy(darkMode = mode)
+        }
         viewModelScope.launch {
             SettingPreferences.edit(context) {
                 it[ThemeDarkMode] = mode

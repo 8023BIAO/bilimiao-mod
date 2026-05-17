@@ -2,16 +2,33 @@ package com.a10miaomiao.bilimiao.config
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.graphics.Color
+import android.util.TypedValue
 import android.view.View
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import com.a10miaomiao.bilimiao.R
-import com.a10miaomiao.bilimiao.comm.attr
 import splitties.dimensions.dip
 import splitties.views.dsl.core.matchParent
 
 class ViewConfig(val context: Context) {
+    // 从 Resources 创建全新的 Theme 解析属性，绕过 Activity.mTheme 缓存。
+    // AppCompatDelegate.setDefaultNightMode 会更新 Resources 配置，
+    // 但 Activity.getTheme() 缓存的 Theme 对象在第2次切换后不会刷新。
+    // 直接用 resources.newTheme() + applyStyle 保证每次读到最新的主题属性。
+    private val attrCache = HashMap<Int, Int>()
+
+    private fun resolveAttr(resid: Int): Int {
+        attrCache[resid]?.let { return it }
+        val freshTheme = context.resources.newTheme().apply {
+            applyStyle(R.style.Theme_Bilimiao, true)
+        }
+        val typedValue = TypedValue()
+        freshTheme.resolveAttribute(resid, typedValue, true)
+        val result = typedValue.resourceId
+        attrCache[resid] = result
+        return result
+    }
+
     val pagePadding = context.dip(10)
     val bottomSheetTitleHeight = context.dip(48)
 
@@ -20,37 +37,35 @@ class ViewConfig(val context: Context) {
 
     val dividerSize = context.dip(8)
 
-    val themeName = context.resources.getString(context.attr(R.attr.themeName))
+    val themeName = context.resources.getString(resolveAttr(R.attr.themeName))
 
-
-    val themeColorResource = context.attr(android.R.attr.colorPrimary)
+    val themeColorResource = resolveAttr(android.R.attr.colorPrimary)
     val themeColor = getColor(themeColorResource)
 
-    val windowBackgroundResource = context.attr(R.attr.defaultBackgroundColor)
+    val windowBackgroundResource = resolveAttr(R.attr.defaultBackgroundColor)
     val windowBackgroundColor = getColor(windowBackgroundResource)
 
-    //    val blockBackgroundResource = context.attr(com.google.android.material.R.attr.colorSurface)
-    val blockBackgroundResource = context.attr(R.attr.blockBackground)
+    val blockBackgroundResource = resolveAttr(R.attr.blockBackground)
     val blockBackgroundColor = getColor(blockBackgroundResource)
     val blockBackgroundAlpha45Color = (blockBackgroundColor and 0x00FFFFFF) or 0x71000000
 
-    val foregroundColorResource = context.attr(R.attr.foregroundColor)
+    val foregroundColorResource = resolveAttr(R.attr.foregroundColor)
     val foregroundColor = getColor(foregroundColorResource)
     val foregroundAlpha45Color = (foregroundColor and 0x00FFFFFF) or 0x71000000
 
     val foregroundAlpha80Color = (foregroundColor and 0x00FFFFFF) or 0xCC000000.toInt()
 
-    private val isLightThemeResource = context.attr(R.attr.isLightTheme)
+    private val isLightThemeResource = resolveAttr(R.attr.isLightTheme)
     val isLightTheme = context.resources.getBoolean(isLightThemeResource)
 
-    val lineColorResource = context.attr(R.attr.lineColor)
+    val lineColorResource = resolveAttr(R.attr.lineColor)
     val lineColor = getColor(lineColorResource)
-    val shadowColorResource = context.attr(R.attr.shadowColor)
+    val shadowColorResource = resolveAttr(R.attr.shadowColor)
     val shadowColor = getColor(shadowColorResource)
 
-    val selectableItemBackground = context.attr(android.R.attr.selectableItemBackground)
+    val selectableItemBackground = resolveAttr(android.R.attr.selectableItemBackground)
     val selectableItemBackgroundBorderless =
-        context.attr(android.R.attr.selectableItemBackgroundBorderless)
+        resolveAttr(android.R.attr.selectableItemBackgroundBorderless)
 
     val appBarHeight = context.dip(70)
     val appBarTitleHeight = context.dip(20)
