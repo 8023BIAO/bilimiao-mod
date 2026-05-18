@@ -80,7 +80,7 @@ class DownloadManager(
         }
         downloadLength += downloadedLength
         for (keys in info.header.keys) {
-            request.addHeader(keys, info.header[keys]!!)
+            request.addHeader(keys, info.header[keys] ?: "")
         }
         val call = mClient.newCall(request.build())
         val response = call.execute()
@@ -89,12 +89,12 @@ class DownloadManager(
         }
         downloadInfo.status = CurrentDownloadInfo.STATUS_DOWNLOADING
         var fileOutputStream: FileOutputStream? = null
-        val body = response.body!!
+        val body = response.body ?: return@flow
         if (info.size == 0L) {
             info.size = body.contentLength()
             emit(info)
         }
-        val `is` = response.body!!.byteStream()
+        val `is` = body.byteStream()
         val bis = BufferedInputStream(`is`)
         fileOutputStream = FileOutputStream(file, true)
         var buffer = ByteArray(2048) //缓冲数组2kB
@@ -136,7 +136,7 @@ class DownloadManager(
             val call = mClient.newCall(request)
             var response = call.execute()
             if (response != null && response.isSuccessful) {
-                val contentLength = response.body!!.contentLength()
+                val contentLength = response.body?.contentLength() ?: -1
                 call.cancel()
                 return if (contentLength == 0L) -1 else contentLength
             }

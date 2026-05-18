@@ -69,8 +69,13 @@ object ApiHelper {
     }
 
 
-    fun getSing(url: String, secret: String): String {
-        var str = url.substring(url.indexOf("?", 4) + 1)
+    fun getSign(url: String, secret: String): String {
+        val qIndex = url.indexOf('?', 4)
+        if (qIndex < 0) {
+            // No query parameters, nothing to sign
+            return getMD5(secret)
+        }
+        var str = url.substring(qIndex + 1)
         val list = str.split("&").toMutableList()
         list.sort()
         str = with(StringBuilder()) {
@@ -104,7 +109,7 @@ object ApiHelper {
         }
     }
 
-    fun getSing(params: Map<String, String?>, secret: String): String {
+    fun getSign(params: Map<String, String?>, secret: String): String {
         val paramsStr = urlencode(params, true)
         return getMD5(paramsStr + secret)
     }
@@ -169,7 +174,7 @@ object ApiHelper {
         if (paramMap["notoken"].isNullOrBlank()) {
             addAccessKeyAndMidToParams(paramMap)
         }
-        paramMap["sign"] = getSing(paramMap, _appSecrer)
+        paramMap["sign"] = getSign(paramMap, _appSecrer)
         return paramMap
     }
 

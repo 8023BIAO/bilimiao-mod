@@ -28,6 +28,10 @@ object BiliHeaders {
     const val TEKey = "TE";
     const val TEValue = "trailers";
     const val Buvid = "buvid"
+    const val BiliTraceId = "x-bili-trace-id"
+    const val BiliAuroraEid = "x-bili-aurora-eid"
+    const val BiliAuroraZone = "x-bili-aurora-zone"
+    const val BiliExpsBin = "x-bili-exps-bin"
 
     // content-encoding
     const val GRPCEncoding = "grpc-encoding"

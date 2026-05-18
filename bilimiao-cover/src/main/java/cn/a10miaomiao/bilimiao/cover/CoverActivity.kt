@@ -302,6 +302,10 @@ class CoverActivity : AppCompatActivity() {
     }
 
     private fun toast(msg: String) {
+        if (Looper.myLooper() != Looper.getMainLooper()) {
+            Handler(Looper.getMainLooper()).post { toast(msg) }
+            return
+        }
         // 完全自定义的提示浮层,不依赖 Toast / Snackbar / Dialog(国产ROM会拦截/改主题)
         val isDark = when (getThemeMode()) {
             1 -> false

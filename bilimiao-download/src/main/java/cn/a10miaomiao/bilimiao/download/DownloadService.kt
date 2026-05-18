@@ -228,7 +228,7 @@ class DownloadService: Service(), CoroutineScope, DownloadManager.Callback {
                 val res = MiaoHttp.request {
                     url = BiliPalyUrlHelper.danmakuXMLUrl(biliDownInfo.entry)
                 }.awaitCall()
-                val xmlBytes = CompressionTools.decompressXML(res.body!!.bytes())
+                val xmlBytes = CompressionTools.decompressXML(res.body?.bytes() ?: ByteArray(0))
                 danmakuXMLFile.writeBytes(xmlBytes)
             } catch (e: Exception){
                 curDownload.value = currentDownloadInfo.copy(
@@ -561,7 +561,7 @@ class DownloadService: Service(), CoroutineScope, DownloadManager.Callback {
                 ""
             }
         } else if (page != null) {
-            dirName = biliEntry.avid!!.toString()
+            dirName = biliEntry.avid?.toString() ?: ""
             pageDirName = "c_" + page.cid
         }
         val downloadDir = File(getDownloadPath(), dirName)

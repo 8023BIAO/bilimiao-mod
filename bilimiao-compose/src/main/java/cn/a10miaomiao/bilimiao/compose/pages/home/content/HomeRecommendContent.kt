@@ -68,6 +68,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.CancellationException
 import org.kodein.di.DI
 import org.kodein.di.DIAware
 import org.kodein.di.compose.rememberInstance
@@ -138,9 +139,9 @@ private class HomeRecommendContentViewModel(
                         if (filterStore.filterTag(it.param)) {
                             newList.add(it)
                             seenUris.add(it.uri)
-                            list.data.value = newList.toList()
                         }
                     }
+                    list.data.value = newList
                 }
                 list.finished.value = itemsList.isEmpty()
             } else {
@@ -148,6 +149,7 @@ private class HomeRecommendContentViewModel(
                 throw Exception(res.message)
             }
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             e.printStackTrace()
             list.fail.value = e.message ?: e.toString()
         } finally {

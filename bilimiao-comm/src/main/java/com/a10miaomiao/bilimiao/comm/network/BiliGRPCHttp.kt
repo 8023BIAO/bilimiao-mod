@@ -12,6 +12,7 @@ import pbandk.encodeToByteArray
 import java.io.File
 import java.io.IOException
 import java.util.zip.GZIPInputStream
+import java.util.UUID
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
@@ -53,14 +54,46 @@ class BiliGRPCHttp<ReqT : Message, RespT : Message>(
         addHeader(BiliHeaders.TransferEncodingKey, BiliHeaders.TransferEncodingValue)
         addHeader(BiliHeaders.TEKey, BiliHeaders.TEValue)
         addHeader(BiliHeaders.Buvid, BilimiaoCommApp.commApp.getBilibiliBuvid())
+        addHeader(BiliHeaders.BiliTraceId, generateTraceId())
+        addHeader(BiliHeaders.BiliAuroraEid, "")
+        addHeader(BiliHeaders.BiliAuroraZone, "")
+        addHeader(BiliHeaders.BiliExpsBin, BiliGRPCConfig.toBase64(byteArrayOf()))
         return this
+    }
+
+    private fun generateTraceId(): String {
+        val randomId = UUID.randomUUID().toString().replace("-", "")
+        val traceId = StringBuilder(32)
+        traceId.append(randomId, 0, 24)
+        var ts = System.currentTimeMillis() / 1000
+        for (i in 2 downTo 0) {
+            ts = ts shr 8
+            val byteVal = ts % 256
+            val b = if ((ts / 128) % 2 == 0L) {
+                byteVal.toByte()
+            } else {
+                (byteVal - 256).toByte()
+            }
+            traceId.append(String.format("%02x", b.toInt() and 0xFF))
+        }
+        traceId.append(randomId[30])
+        traceId.append(randomId[31])
+        val result = traceId.toString()
+        return "$result:${result.substring(16, 32)}:0:0"
     }
 
     private fun buildRequest(): Request {
         val url = baseUrl + method.name
         val messageBytes = method.reqMessage.encodeToByteArray()
-        // 校验用?第五位为数组长度
-        val stateBytes = byteArrayOf(0, 0, 0, 0, messageBytes.size.toByte())
+        // gRPC frame header: 1 byte compression (0=uncompressed) + 4 bytes big-endian length
+        val length = messageBytes.size
+        val stateBytes = byteArrayOf(
+            0,
+            (length shr 24).toByte(),
+            (length shr 16).toByte(),
+            (length shr 8).toByte(),
+            length.toByte(),
+        )
         // 合并两个字节数组
         val bodyBytes = ByteArray(stateBytes.size + messageBytes.size)
         System.arraycopy(stateBytes, 0, bodyBytes, 0, stateBytes.size)
@@ -76,17 +109,53 @@ class BiliGRPCHttp<ReqT : Message, RespT : Message>(
             .build()
     }
 
+    @OptIn(ExperimentalStdlibApi::class)
     private fun parseResponse(res: Response): RespT {
-        var inputStream = res.body!!.byteStream()
-        inputStream.skip(5L)
-
-        // 手动解压gzip
-        if (res.header(BiliHeaders.GRPCEncoding) == BiliHeaders.GRPCEncodingGZIP) {
-            inputStream = GZIPInputStream(inputStream)
+        if (!res.isSuccessful) {
+            val errorBody = res.body?.string() ?: "no body"
+            res.close()
+            throw IOException("gRPC HTTP ${res.code}: $errorBody")
         }
+        val body = res.body ?: throw IOException("gRPC response body is null (code=${res.code})")
+        var inputStream = body.byteStream()
+        try {
+            // 读取 gRPC frame header: 1 byte compression + 4 bytes big-endian length
+            val header = ByteArray(5)
+            var offset = 0
+            while (offset < 5) {
+                val read = inputStream.read(header, offset, 5 - offset)
+                if (read == -1) throw IOException("gRPC header truncated")
+                offset += read
+            }
+            val compressionFlag = header[0].toInt() and 0xFF
+            val messageLength = ((header[1].toInt() and 0xFF) shl 24) or
+                    ((header[2].toInt() and 0xFF) shl 16) or
+                    ((header[3].toInt() and 0xFF) shl 8) or
+                    (header[4].toInt() and 0xFF)
 
-        return method.respMessageCompanion
-            .decodeFromStream(inputStream)
+            if (compressionFlag != 0) {
+                // 解压
+                inputStream = GZIPInputStream(body.byteStream())
+                inputStream.skip(5L) // 解压流从头开始，跳过原始header
+            } else if (res.header(BiliHeaders.GRPCEncoding) == BiliHeaders.GRPCEncodingGZIP) {
+                // fallback: server-level gzip
+                inputStream = GZIPInputStream(body.byteStream())
+                inputStream.skip(5L)
+            }
+
+            // 只读取 messageLength 字节的消息体
+            val messageBytes = ByteArray(messageLength)
+            var readOffset = 0
+            while (readOffset < messageLength) {
+                val read = inputStream.read(messageBytes, readOffset, messageLength - readOffset)
+                if (read == -1) throw IOException("gRPC message body truncated")
+                readOffset += read
+            }
+            return method.respMessageCompanion.decodeFromByteArray(messageBytes)
+        } finally {
+            inputStream.close()
+            body.close()
+        }
     }
 
     suspend fun awaitCall(): RespT {
@@ -105,6 +174,7 @@ class BiliGRPCHttp<ReqT : Message, RespT : Message>(
                         val respMessage = parseResponse(response)
                         continuation.resume(respMessage)
                     } catch (e: Exception) {
+                        response.close()
                         continuation.resumeWithException(e)
                     }
                 }

@@ -246,18 +246,18 @@ private class SMSLoginPageViewModel(
             }
         }
         if (res.isSuccess) {
-            val resData = res.data!!
+            val resData = res.data ?: return false
             if (!resData.recaptcha_url.isNullOrBlank()) {
                 recaptchaUrl = resData.recaptcha_url!!
                 biliGeetestUtil.startCustomFlow(this)
                 return false
             }
-            captchaKey = res.requireData().captcha_key!!
+            captchaKey = res.data?.captcha_key ?: return false
             startCountdown(60)
             toast("已发送短信验证码")
             return true
         } else if (res.code == -105 && gt3Result == null) {
-            recaptchaUrl = res.requireData().recaptcha_url!!
+            recaptchaUrl = res.data?.recaptcha_url ?: return false
             biliGeetestUtil.startCustomFlow(this)
             return false
         } else {

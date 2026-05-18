@@ -4,7 +4,6 @@ import android.app.Activity
 import android.content.Intent
 import android.graphics.Bitmap
 import android.net.Uri
-import android.widget.Toast
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -295,6 +294,6 @@ class CoverViewModel(
     }
 
     private fun toast(msg: String) {
-        Toast.makeText(activity, msg, Toast.LENGTH_SHORT).show()
+        com.a10miaomiao.bilimiao.comm.toast(msg)
     }
 }

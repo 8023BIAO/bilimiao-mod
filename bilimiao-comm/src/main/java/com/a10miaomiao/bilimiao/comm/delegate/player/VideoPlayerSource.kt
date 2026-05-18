@@ -64,7 +64,7 @@ class VideoPlayerSource(
                     quality = res.quality
                 )
             } else {
-                val durl = res.durl!!
+                val durl = res.durl ?: throw Exception("Missing durl in video player response")
                 if (durl.size == 1) {
                     it.duration = durl[0].length
                     it.url = durl[0].url
@@ -107,7 +107,7 @@ class VideoPlayerSource(
             return null
         }
         playerSource.acceptList = availableStreamList.map {
-            val acceptInfo = it.streamInfo!!
+            val acceptInfo = it.streamInfo ?: return@map PlayerSourceInfo.AcceptInfo(0, "")
             PlayerSourceInfo.AcceptInfo(
                 acceptInfo.quality,
                 acceptInfo.newDescription

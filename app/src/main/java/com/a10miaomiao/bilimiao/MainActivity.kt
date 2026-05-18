@@ -95,7 +95,7 @@ class MainActivity
     DIAware {
 
     private var mainUi: MainUi? = null
-    private val ui get() = mainUi!!
+    private val ui get() = mainUi ?: throw IllegalStateException("mainUi is not initialized yet")
 
     override val di: DI = DI.lazy {
         bindSingleton { this@MainActivity }

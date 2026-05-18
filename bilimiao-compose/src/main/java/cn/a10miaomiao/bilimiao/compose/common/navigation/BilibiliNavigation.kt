@@ -68,7 +68,7 @@ object BilibiliNavigation {
         }
         val host = uri.host
         if (host == "space.bilibili.com") {
-            val path = uri.path!!.replace("/", "")
+            val path = (uri.path ?: "").replace("/", "")
             val mid = if (isNumeric(path)) { path } else { "" }
             pageNavigation.navigate(
                 UserSpacePage(mid)
@@ -77,7 +77,7 @@ object BilibiliNavigation {
         }
         val queryParameterNames = uri.queryParameterNames
         if (queryParameterNames.contains("avid")) {
-            val aid = uri.getQueryParameter("avid")!!
+            val aid = uri.getQueryParameter("avid") ?: ""
             pageNavigation.navigateToVideoInfo(aid)
             return true
         }

@@ -20,12 +20,15 @@ import kotlin.coroutines.resumeWithException
 class MiaoHttp(var url: String? = null) {
 
     private val cookieManager by lazy {
-       try { CookieManager.getInstance() }
-       catch (e: Exception) { null }
+        try {
+            CookieManager.getInstance()
+        } catch (e: Exception) {
+            miaoLogger().e("CookieManager init failed", e)
+            null
+        }
     }
 
     private var client = OkHttpClient()
-    private val requestBuilder = Request.Builder()
     val headers = mutableMapOf<String, String>()
     var method = GET
 
@@ -33,6 +36,7 @@ class MiaoHttp(var url: String? = null) {
     var formBody: Map<String, String?>? = null
 
     private fun buildRequest(): Request {
+        val requestBuilder = Request.Builder()
         requestBuilder.addHeader("User-Agent", ApiHelper.USER_AGENT)
         requestBuilder.addHeader("Referer", ApiHelper.REFERER)
         requestBuilder.addHeader("buvid", BilimiaoCommApp.commApp.getBilibiliBuvid())
@@ -46,15 +50,15 @@ class MiaoHttp(var url: String? = null) {
             if (isWbiEnabled && url?.let { "api.bilibili.com" in it 
                 && "/x/web-interface/nav" !in it 
                 && "ranking/v2" !in it } == true) {
-                url = WbiSigner.signUrlBlocking(url!!)
+                url = WbiSigner.signUrlBlocking(url ?: throw IllegalStateException("url must be set"))
             }
         }
         val cookie = getCookie(url)
         if (!cookie.isNullOrBlank()) {
             requestBuilder.addHeader("Cookie", cookie)
         }
-        for (key in headers.keys) {
-            requestBuilder.addHeader(key, headers[key]!!)
+        for ((key, value) in headers) {
+            requestBuilder.addHeader(key, value)
         }
 
         if (body == null && formBody != null) {
@@ -64,7 +68,7 @@ class MiaoHttp(var url: String? = null) {
             )
         }
         val req = requestBuilder.method(method, body)
-            .url(url!!)
+            .url(url ?: throw IllegalStateException("url must be set"))
             .build()
         return req
     }

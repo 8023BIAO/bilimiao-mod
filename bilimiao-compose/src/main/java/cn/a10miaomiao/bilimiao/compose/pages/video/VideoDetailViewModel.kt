@@ -54,6 +54,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.CancellationException
 import java.net.URL
 import kotlinx.coroutines.withContext
 import org.kodein.di.DI
@@ -151,6 +152,7 @@ class VideoDetailViewModel(
             _detailData.value = res
             autoStartPlay()
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             e.printStackTrace()
             _fail.value = e
         } finally {
@@ -318,6 +320,7 @@ class VideoDetailViewModel(
                 toast(res.message)
             }
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             e.printStackTrace()
             toast(e.toString())
         }
@@ -470,6 +473,7 @@ class VideoDetailViewModel(
                 toast(res.message)
             }
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             e.printStackTrace()
             toast(e.message ?: e.toString())
         }
@@ -528,6 +532,7 @@ class VideoDetailViewModel(
                 }
                 withContext(Dispatchers.Main) { toast("封面已保存到相册") }
             } catch (e: Exception) {
+                if (e is CancellationException) throw e
                 e.printStackTrace()
                 withContext(Dispatchers.Main) { toast("封面保存失败: ${e.message}") }
             }
@@ -645,21 +650,7 @@ class VideoDetailViewModel(
             }
         }
         when (item.key) {
-            MenuKeys.download -> {
-                viewModelScope.launch {
-                    val downloadService = DownloadService.getService(activity)
-                    downloadDialogState.show(
-                        downloadService,
-                        videoDetail.getBvid(),
-                        videoArc,
-                        viewPages,
-                        activity,
-                        ugcSeasonEpisodes = ugcSeasonEpisodes,
-                        seasonId = ugcSeason?.id?.toString(),
-                        seasonTitle = ugcSeason?.title,
-                    )
-                }
-            }
+            MenuKeys.download -> openDownloadDialog()
             MenuKeys.favourite -> {
                 openAddFavoriteDialog(videoArc.aid.toString())
             }

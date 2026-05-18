@@ -308,6 +308,10 @@ private class ReplyDetailContentViewModel(
     }
 
     fun openReplyDialog(reply: ReplyInfo) {
+        if (!userStore.isLogin()) {
+            toast("请先登录")
+            return
+        }
         val params = ReplyEditParams(
             type = currentReply.type.toInt(),
             oid = reply.oid.toString(),
@@ -319,6 +323,10 @@ private class ReplyDetailContentViewModel(
     }
 
     fun openReplyDialog() {
+        if (!userStore.isLogin()) {
+            toast("请先登录")
+            return
+        }
         val rid = currentReply.id
         val root = currentReply.root
         val params = ReplyEditParams(

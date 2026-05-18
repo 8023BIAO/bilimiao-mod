@@ -938,7 +938,7 @@ class PlayerController(
                         headers["User-Agent"] = "Mozilla/5.0"
                     }
                     .awaitCall()
-                val jsonStr = response.body!!.string()
+                val jsonStr = response.body?.string() ?: ""
                 val root = org.json.JSONObject(jsonStr)
                 if (root.optInt("code", -1) != 0) return@launch
 

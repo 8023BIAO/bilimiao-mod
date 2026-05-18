@@ -68,13 +68,26 @@ class MyFollowPage() : ComposePage() {
 
     @Composable
     override fun Content() {
-        val viewModel = diViewModel<MyFollowViewModel>()
-        subDI(
-            diBuilder = {
-                bindSingleton { viewModel }
+        val userStore: UserStore by rememberInstance()
+        if (userStore.isLogin()) {
+            val viewModel = diViewModel<MyFollowViewModel>()
+            subDI(
+                diBuilder = {
+                    bindSingleton { viewModel }
+                }
+            ) {
+                MyFollowPageContent()
             }
-        ) {
-            MyFollowPageContent()
+        } else {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    "请先登录",
+                    style = MaterialTheme.typography.bodyLarge
+                )
+            }
         }
     }
 }

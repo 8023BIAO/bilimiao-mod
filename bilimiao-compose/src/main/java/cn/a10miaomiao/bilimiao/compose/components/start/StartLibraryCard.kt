@@ -181,11 +181,7 @@ fun StartLibraryCard(
                 "历史",
                 R.drawable.ic_nav_history,
                 onClick = {
-                    if (userId != null) {
-                        navigateTo(HistoryPage())
-                    } else {
-                        toast("请先登录")
-                    }
+                    navigateTo(HistoryPage())
                 },
             ) {
                 userLibraryState.history.forEach {

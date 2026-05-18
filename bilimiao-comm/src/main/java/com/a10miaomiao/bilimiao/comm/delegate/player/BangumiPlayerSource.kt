@@ -78,7 +78,7 @@ class BangumiPlayerSource(
                     quality = res.quality
                 )
             } else {
-                val durl = res.durl!!
+                val durl = res.durl ?: throw Exception("Missing durl in bangumi player response")
                 if (durl.size == 1) {
                     it.duration = durl[0].length
                     it.url = if (uposHost.isNotBlank()) {
@@ -131,7 +131,7 @@ class BangumiPlayerSource(
             "User-Agent" to "Mozilla/5.0 BiliDroid/1.41.0 (bbcallen@gmail.com)",
         )
         playerSource.acceptList = availableStreamList.map {
-            val acceptInfo = it.info!!
+            val acceptInfo = it.info ?: return@map PlayerSourceInfo.AcceptInfo(0, "")
             PlayerSourceInfo.AcceptInfo(
                 acceptInfo.quality,
                 acceptInfo.newDescription
@@ -206,7 +206,7 @@ class BangumiPlayerSource(
                     quality = res.quality
                 )
             } else {
-                val durl = res.durl!!
+                val durl = res.durl ?: throw Exception("Missing durl in proxy bangumi player response")
                 if (durl.size == 1) {
                     it.duration = durl[0].length
                     it.url = if (uposHost.isNotBlank()) {

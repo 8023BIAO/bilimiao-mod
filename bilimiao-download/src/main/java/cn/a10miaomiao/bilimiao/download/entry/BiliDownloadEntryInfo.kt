@@ -34,7 +34,7 @@ data class BiliDownloadEntryInfo(
 
     val key: Long
         get() {
-            return source?.cid ?: page_data?.cid ?: avid!!
+            return source?.cid ?: page_data?.cid ?: 0
         }
 
     val name: String

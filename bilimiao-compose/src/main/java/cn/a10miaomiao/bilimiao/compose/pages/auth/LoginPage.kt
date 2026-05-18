@@ -2,9 +2,6 @@ package cn.a10miaomiao.bilimiao.compose.pages.auth
 
 import android.content.Intent
 import android.net.Uri
-import android.widget.Toast
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedContentScope
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
@@ -16,7 +13,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
@@ -39,7 +35,6 @@ import com.a10miaomiao.bilimiao.comm.BilimiaoCommApp
 import com.a10miaomiao.bilimiao.comm.entity.ResponseData
 import com.a10miaomiao.bilimiao.comm.entity.auth.LoginInfo
 import com.a10miaomiao.bilimiao.comm.entity.auth.WebKeyInfo
-import com.a10miaomiao.bilimiao.comm.miao.MiaoJson
 import com.a10miaomiao.bilimiao.comm.entity.user.UserInfo
 import com.a10miaomiao.bilimiao.comm.network.BiliApiService
 import com.a10miaomiao.bilimiao.comm.network.MiaoHttp.Companion.json
@@ -153,9 +148,9 @@ private class LoginPageViewModel(
                                             && params.containsKey("source")
                                         ) {
                                             pageNavigation.navigate(TelVerifyPage(
-                                                code = params["tmp_token"]!!,
-                                                requestId = params["request_id"]!!,
-                                                source = params["source"]!!,
+                                                code = params["tmp_token"] ?: "",
+                                                requestId = params["request_id"] ?: "",
+                                                source = params["source"] ?: "",
                                             ))
                                         } else {
                                             pageNavigation.launchWebBrowser(loginInfo.url)
@@ -424,65 +419,6 @@ private fun LoginPageContent(
                 TextButton(onClick = viewModel::toQrLogin) {
                     Text(text = "二维码登录")
                 }
-            }
-            // Cookie文件登录
-            val context = LocalContext.current
-            val importAuthLauncher = rememberLauncherForActivityResult(
-                contract = ActivityResultContracts.OpenDocument()
-            ) { uri ->
-                if (uri == null) return@rememberLauncherForActivityResult
-                viewModel.viewModelScope.launch(Dispatchers.IO) {
-                    try {
-                        val jsonStr = context.contentResolver.openInputStream(uri)?.use { input ->
-                            java.io.BufferedReader(java.io.InputStreamReader(input, Charsets.UTF_8)).readText()
-                        } ?: throw Exception("无法读取文件")
-                        val data = MiaoJson.fromJson<Map<String, String>>(jsonStr)
-                        val cookieStr = data["cookie"] ?: throw Exception("未找到cookie字段")
-                        val accessToken = data["access_token"] ?: throw Exception("未找到access_token字段")
-                        val refreshToken = data["refresh_token"] ?: throw Exception("未找到refresh_token字段")
-                        val mid = data["mid"]?.toLongOrNull() ?: throw Exception("未找到mid字段")
-                        val cookies = cookieStr.split(";").map { pair ->
-                            val parts = pair.trim().split("=", limit = 2)
-                            LoginInfo.Cookie(
-                                name = parts[0].trim(),
-                                value = if (parts.size > 1) parts[1].trim() else "",
-                                expires = 0,
-                                http_only = 0
-                            )
-                        }
-                        val cookieInfo = LoginInfo.CookieInfo(
-                            cookies = cookies,
-                            domains = listOf(".bilibili.com", "bilibili.com")
-                        )
-                        val tokenInfo = LoginInfo.TokenInfo(
-                            access_token = accessToken,
-                            refresh_token = refreshToken,
-                            mid = mid,
-                            expires_in = 2592000
-                        )
-                        val loginInfo = LoginInfo(
-                            token_info = tokenInfo,
-                            sso = null,
-                            cookie_info = cookieInfo
-                        )
-                        BilimiaoCommApp.commApp.saveAuthInfo(loginInfo)
-                        userStore.loadInfo()  // 刷新用户信息，无需重启
-                        withContext(Dispatchers.Main) {
-                            Toast.makeText(context, "登录成功", Toast.LENGTH_SHORT).show()
-                            viewModel.toHome()
-                        }
-                    } catch (e: Exception) {
-                        withContext(Dispatchers.Main) {
-                            Toast.makeText(context, "登录失败：${e.message}", Toast.LENGTH_LONG).show()
-                        }
-                    }
-                }
-            }
-            TextButton(
-                onClick = { importAuthLauncher.launch(arrayOf("application/json", "*/*")) },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("Cookie文件登录", color = MaterialTheme.colorScheme.primary)
             }
             Spacer(modifier = Modifier.height(windowInsets.bottomDp.dp + bottomAppBarHeight.dp))
 

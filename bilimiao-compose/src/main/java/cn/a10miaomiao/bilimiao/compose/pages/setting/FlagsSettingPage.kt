@@ -92,7 +92,7 @@ private class FlagsSettingPageViewModel(
             if (loginInfo != null) {
                 val json = MiaoJson.toJson(loginInfo)
                 val prefs = ctx.getSharedPreferences("bilimiao_guest_backup", Context.MODE_PRIVATE)
-                prefs.edit().putString("login_info_backup", json).commit()
+                prefs.edit().putString("login_info_backup", json).apply()
                 userStore.logout()  // 复用退出登录逻辑
                 Toast.makeText(ctx, "已启用游客模式，正在重启...", Toast.LENGTH_SHORT).show()
                 val restartIntent = ctx.packageManager.getLaunchIntentForPackage(ctx.packageName)
@@ -110,7 +110,7 @@ private class FlagsSettingPageViewModel(
                 try {
                     val loginInfo = MiaoJson.fromJson<LoginInfo>(backupJson)
                     BilimiaoCommApp.commApp.saveAuthInfo(loginInfo)
-                    prefs.edit().remove("login_info_backup").commit()
+                    prefs.edit().remove("login_info_backup").apply()
                     userStore.loadInfo()  // 重新加载用户信息
                     Toast.makeText(ctx, "登录信息已恢复，正在重启...", Toast.LENGTH_SHORT).show()
                     val restartIntent = ctx.packageManager.getLaunchIntentForPackage(ctx.packageName)
@@ -317,7 +317,7 @@ private fun FlagsSettingPageContent(
         flow = rememberPreferenceFlow(dataStore)
     ) {
         // 游客模式状态（必须在 Composable 作用域内）
-        var loginInfoState by remember { mutableStateOf(BilimiaoCommApp.commApp.loginInfo) }
+        val loginInfoState by userStore.stateFlow.collectAsState()
         var hasBackup by remember {
             mutableStateOf(
                 context.getSharedPreferences("bilimiao_guest_backup", Context.MODE_PRIVATE)
@@ -405,7 +405,6 @@ private fun FlagsSettingPageContent(
                             summary = { Text("临时清除登录状态，以匿名身份访问B站") },
                             onClick = {
                                 viewModel.toggleGuestMode(true)
-                                loginInfoState = null
                                 hasBackup = true
                             },
                         )
@@ -416,7 +415,6 @@ private fun FlagsSettingPageContent(
                             summary = { Text("恢复之前备份的登录信息，清除游客模式") },
                             onClick = {
                                 viewModel.toggleGuestMode(false)
-                                loginInfoState = BilimiaoCommApp.commApp.loginInfo
                                 hasBackup = false
                             },
                         )

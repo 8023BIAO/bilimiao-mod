@@ -129,21 +129,9 @@ class HistoryPage : ComposePage() {
 
     @Composable
     override fun Content() {
-        val userStore: UserStore by rememberInstance()
-        val userState by userStore.stateFlow.collectAsState()
-        val isLogin = userState.info != null
         val viewModel: HistoryPageViewModel = diViewModel()
         BoxWithConstraints {
-            if (isLogin) {
-                HistoryPageContent(viewModel, maxWidth)
-            } else {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text("请先登录", style = MaterialTheme.typography.titleMedium)
-                }
-            }
+            HistoryPageContent(viewModel, maxWidth)
         }
     }
 }

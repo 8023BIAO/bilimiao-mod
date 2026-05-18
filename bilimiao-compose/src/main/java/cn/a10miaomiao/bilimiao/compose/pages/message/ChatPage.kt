@@ -80,7 +80,17 @@ data class ChatPage(
     @OptIn(ExperimentalGlideComposeApi::class)
     @Composable
     override fun Content() {
-        ChatPageContent(talkerId, talkerName, talkerFace)
+        val userStore: UserStore by rememberInstance()
+        if (userStore.isLogin()) {
+            ChatPageContent(talkerId, talkerName, talkerFace)
+        } else {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Text("请先登录", style = MaterialTheme.typography.bodyLarge)
+            }
+        }
     }
 }
 

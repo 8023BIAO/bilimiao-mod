@@ -35,6 +35,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.CancellationException
 import org.kodein.di.DI
 import org.kodein.di.DIAware
 import org.kodein.di.instance
@@ -136,6 +137,7 @@ class MainReplyViewModel(
                 list.finished.value = true
             }
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             e.printStackTrace()
             list.fail.value = e.message ?: e.toString()
         } finally {
@@ -199,6 +201,7 @@ class MainReplyViewModel(
                 toast(res.message)
             }
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             e.printStackTrace()
             toast("加载失败:" + e.message ?: e.toString())
         }
@@ -238,6 +241,7 @@ class MainReplyViewModel(
                 toast(res.message)
             }
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             e.printStackTrace()
             toast("加载失败:" + e.message ?: e.toString())
         }
@@ -295,6 +299,7 @@ class MainReplyViewModel(
                 }
             }
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             e.printStackTrace()
             withContext(Dispatchers.Main) {
                 messageDialog.alert(
