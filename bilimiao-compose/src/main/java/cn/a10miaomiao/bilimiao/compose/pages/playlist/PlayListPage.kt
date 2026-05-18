@@ -223,8 +223,11 @@ private fun PlayListPageContent(
             view.performHapticFeedback(HapticFeedbackConstants.SEGMENT_FREQUENT_TICK)
         }
         LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.surface),
             state = lazyListState,
-            contentPadding = windowInsets.toPaddingValues()
+            contentPadding = windowInsets.toPaddingValues(),
         ) {
             val playListItems = playListState.items
             val currentPlayAid = playerState.aid
